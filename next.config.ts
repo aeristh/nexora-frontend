@@ -1,5 +1,6 @@
 import type { NextConfig } from 'next'
 
+// config
 const nextConfig: NextConfig = {
   async rewrites() {
     return [
