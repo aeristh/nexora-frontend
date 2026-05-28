@@ -119,7 +119,6 @@ export default function BlogPage() {
         setLoadingMore(true)
         setNewStartIndex(currentCount)
 
-        // Simulasi delay kecil agar skeleton terasa
         setTimeout(() => {
             setVisibleBlogs(prev => [...prev, ...nextSlice])
             setLoadingMore(false)
@@ -240,13 +239,11 @@ export default function BlogPage() {
                                 </div>
                             ))}
 
-                            {/* Skeleton saat load more */}
                             {loadingMore && [1, 2].map(i => (
                                 <div key={`sk-${i}`} className="bp-skeleton bp-skeleton--inline" />
                             ))}
                         </div>
 
-                        {/* Show More area */}
                         <div ref={showMoreRef} className="bp-showmore-wrap">
                             {hasMore && !loadingMore && (
                                 <button className="bp-showmore-btn" onClick={handleShowMore}>
@@ -342,7 +339,6 @@ const pageStyles = `
     display: flex; flex-direction: column;
 }
 .bp-card:hover { transform: translateY(-3px); box-shadow: 0 8px 28px rgba(0,0,0,0.10); }
-/* Hanya card baru yang animasi */
 .bp-card--new {
     animation: bp-fadein 0.5s ease both;
 }
@@ -408,7 +404,6 @@ const pageStyles = `
 .bp-empty h3 { font-size: 18px; font-weight: 700; color: #1a1a1a; margin: 0; }
 .bp-empty p { color: #888; font-size: 14px; margin: 0 0 8px; }
 
-/* ── Show More ── */
 .bp-showmore-wrap {
     display: flex;
     align-items: center;

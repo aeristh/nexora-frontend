@@ -1,5 +1,6 @@
 "use client"
 
+import { Suspense } from "react"
 import { useEffect, useState, useRef } from "react"
 import { useRouter, useSearchParams } from "next/navigation"
 
@@ -11,7 +12,15 @@ type User = {
 
 const BASE = process.env.NEXT_PUBLIC_API_URL || "http://localhost:3333"
 
-
+// Pilihan kategori — bisa kamu tambah/ubah sesuai kebutuhan
+const CATEGORY_OPTIONS = [
+    "Teknologi",
+    "Bisnis",
+    "Desain",
+    "Pendidikan",
+    "Hiburan",
+    "Lainnya",
+]
 
 function getInitials(name: string) {
     return name.split(" ").map(n => n[0]).join("").slice(0, 2).toUpperCase()
@@ -21,7 +30,7 @@ function stripHtml(html: string) {
     return html.replace(/<[^>]*>/g, "").replace(/&nbsp;/g, " ").trim()
 }
 
-export default function BlogWritePage() {
+function BlogWriteContent() {
     const router = useRouter()
     const [currentUser, setCurrentUser] = useState<User | null>(null)
     const [title, setTitle] = useState("")
@@ -33,9 +42,22 @@ export default function BlogWritePage() {
     const editorRef = useRef<HTMLDivElement>(null)
     const titleRef = useRef<HTMLDivElement>(null)
 
+    // ✅ BARU: state untuk category dan tags
+    const [category, setCategory] = useState("")
+    const [tags, setTags] = useState<string[]>([])
+    const [tagInput, setTagInput] = useState("")
+
     const searchParams = useSearchParams()
     const editId = searchParams.get("id")
     const [isEditMode, setIsEditMode] = useState(false)
+
+    // Load user dari localStorage
+    useEffect(() => {
+        const raw = localStorage.getItem("user")
+        if (raw) {
+            try { setCurrentUser(JSON.parse(raw)) } catch { }
+        }
+    }, [])
 
     useEffect(() => {
         if (!editId) return
@@ -57,6 +79,9 @@ export default function BlogWritePage() {
                         : `${BASE}${blog.coverImage}`
                     setCoverPreview(src)
                 }
+                // ✅ BARU: load category & tags saat edit
+                if (blog.category) setCategory(blog.category)
+                if (blog.tags && Array.isArray(blog.tags)) setTags(blog.tags)
             } catch {
                 setError("Gagal memuat artikel.")
             }
@@ -76,6 +101,39 @@ export default function BlogWritePage() {
         setCoverPreview(URL.createObjectURL(file))
     }
 
+    // ✅ BARU: fungsi untuk menambah tag
+    function handleAddTag() {
+        const trimmed = tagInput.trim().toLowerCase()
+        if (!trimmed) return
+        if (tags.includes(trimmed)) {
+            setTagInput("")
+            return
+        }
+        if (tags.length >= 5) {
+            setError("Maksimal 5 tag.")
+            return
+        }
+        setTags(prev => [...prev, trimmed])
+        setTagInput("")
+    }
+
+    // ✅ BARU: tambah tag dengan tombol Enter
+    function handleTagKeyDown(e: React.KeyboardEvent<HTMLInputElement>) {
+        if (e.key === "Enter") {
+            e.preventDefault()
+            handleAddTag()
+        }
+        // Hapus tag terakhir dengan Backspace jika input kosong
+        if (e.key === "Backspace" && tagInput === "" && tags.length > 0) {
+            setTags(prev => prev.slice(0, -1))
+        }
+    }
+
+    // ✅ BARU: hapus tag
+    function handleRemoveTag(tagToRemove: string) {
+        setTags(prev => prev.filter(t => t !== tagToRemove))
+    }
+
     async function handlePublish() {
         if (!title.trim()) return setError("Judul tidak boleh kosong.")
         const content = editorRef.current?.innerHTML || ""
@@ -88,6 +146,13 @@ export default function BlogWritePage() {
             formData.append("title", title)
             formData.append("content", content)
             if (coverFile) formData.append("coverImage", coverFile)
+
+            // ✅ BARU: kirim category dan tags ke API
+            if (category) formData.append("category", category)
+            if (tags.length > 0) {
+                // Kirim tags sebagai JSON string, nanti di-parse di backend
+                formData.append("tags", JSON.stringify(tags))
+            }
 
             const url = isEditMode ? `${BASE}/blogs/${editId}` : `${BASE}/blogs`
             const method = isEditMode ? "PUT" : "POST"
@@ -112,7 +177,10 @@ export default function BlogWritePage() {
         setCoverFile(null)
         setCoverPreview("")
         setError("")
-        if (titleRef.current) titleRef.current.innerText = ""   // ← tambah ini
+        setCategory("")      // ✅ BARU
+        setTags([])          // ✅ BARU
+        setTagInput("")      // ✅ BARU
+        if (titleRef.current) titleRef.current.innerText = ""
         if (editorRef.current) editorRef.current.innerHTML = ""
     }
 
@@ -121,7 +189,6 @@ export default function BlogWritePage() {
             <style>{pageStyles}</style>
             <div className="we-root">
 
-                {/* NAVBAR */}
                 <nav className="we-nav">
                     <div className="we-nav__left">
                         <button className="we-nav-back" onClick={() => router.push("/blog")}>
@@ -167,7 +234,6 @@ export default function BlogWritePage() {
                     </div>
                 </nav>
 
-                {/* FORMAT TOOLBAR */}
                 <div className="we-toolbar">
                     <div className="we-toolbar__group">
                         <button className="we-tool" title="Bold" onMouseDown={e => { e.preventDefault(); execCmd("bold") }}><span style={{ fontWeight: 700 }}>B</span></button>
@@ -199,7 +265,6 @@ export default function BlogWritePage() {
                     </div>
                 </div>
 
-                {/* ALERTS */}
                 {success && (
                     <div className="we-alert we-alert--success">
                         <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><polyline points="20 6 9 17 4 12" /></svg>
@@ -214,11 +279,9 @@ export default function BlogWritePage() {
                     </div>
                 )}
 
-                {/* EDITOR SCROLL AREA */}
                 <div className="we-scroll">
                     <div className="we-doc">
 
-                        {/* Cover */}
                         <div className="we-cover">
                             {coverPreview ? (
                                 <>
@@ -253,7 +316,6 @@ export default function BlogWritePage() {
                             )}
                         </div>
 
-                        {/* Title */}
                         <div
                             ref={titleRef}
                             className="we-title"
@@ -266,7 +328,6 @@ export default function BlogWritePage() {
                             }}
                         />
 
-                        {/* Meta */}
                         <div className="we-meta">
                             <div className="we-meta__avatar">{getInitials(currentUser?.name || "?")}</div>
                             <div className="we-meta__info">
@@ -277,7 +338,67 @@ export default function BlogWritePage() {
                             </div>
                         </div>
 
-                        {/* Body */}
+                        {/* ✅ BARU: Panel Category & Tags */}
+                        <div className="we-meta-extra">
+
+                            {/* Category */}
+                            <div className="we-field">
+                                <label className="we-field__label">
+                                    <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                                        <path d="M4 20h16a2 2 0 0 0 2-2V8a2 2 0 0 0-2-2h-7.93a2 2 0 0 1-1.66-.9l-.82-1.2A2 2 0 0 0 7.93 3H4a2 2 0 0 0-2 2v13c0 1.1.9 2 2 2z" />
+                                    </svg>
+                                    Kategori
+                                </label>
+                                <select
+                                    className="we-field__select"
+                                    value={category}
+                                    onChange={e => setCategory(e.target.value)}
+                                >
+                                    <option value="">-- Pilih Kategori --</option>
+                                    {CATEGORY_OPTIONS.map(opt => (
+                                        <option key={opt} value={opt}>{opt}</option>
+                                    ))}
+                                </select>
+                            </div>
+
+                            {/* Tags */}
+                            <div className="we-field">
+                                <label className="we-field__label">
+                                    <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                                        <path d="M20.59 13.41l-7.17 7.17a2 2 0 0 1-2.83 0L2 12V2h10l8.59 8.59a2 2 0 0 1 0 2.82z" />
+                                        <line x1="7" y1="7" x2="7.01" y2="7" />
+                                    </svg>
+                                    Tags
+                                    <span className="we-field__hint">Tekan Enter untuk menambah (maks. 5)</span>
+                                </label>
+                                <div className="we-tags-input">
+                                    {tags.map(tag => (
+                                        <span key={tag} className="we-tag">
+                                            #{tag}
+                                            <button
+                                                className="we-tag__remove"
+                                                onClick={() => handleRemoveTag(tag)}
+                                                type="button"
+                                            >×</button>
+                                        </span>
+                                    ))}
+                                    {tags.length < 5 && (
+                                        <input
+                                            className="we-tags-input__field"
+                                            type="text"
+                                            placeholder={tags.length === 0 ? "Contoh: anime, review..." : "Tambah tag..."}
+                                            value={tagInput}
+                                            onChange={e => setTagInput(e.target.value)}
+                                            onKeyDown={handleTagKeyDown}
+                                            onBlur={handleAddTag}
+                                        />
+                                    )}
+                                </div>
+                            </div>
+
+                        </div>
+                        {/* END BARU */}
+
                         <div
                             ref={editorRef}
                             className="we-body"
@@ -294,15 +415,21 @@ export default function BlogWritePage() {
     )
 }
 
+export default function BlogWritePage() {
+    return (
+        <Suspense fallback={<div style={{ padding: 40, textAlign: "center", color: "#aaa" }}>Memuat editor...</div>}>
+            <BlogWriteContent />
+        </Suspense>
+    )
+}
+
 const pageStyles = `
-/* ── ESCAPE LAYOUT PADDING ── */
 body:has(.we-root) .main {
     padding: 0 !important;
     margin: 0 !important;
     overflow: hidden;
 }
 
-/* ── ROOT: fullscreen flex column ── */
 .we-root {
     display: flex;
     flex-direction: column;
@@ -313,7 +440,6 @@ body:has(.we-root) .main {
     box-sizing: border-box;
 }
 
-/* ── NAVBAR ── */
 .we-nav {
     flex-shrink: 0;
     display: flex;
@@ -371,7 +497,6 @@ body:has(.we-root) .main {
 }
 @keyframes we-spin { to { transform: rotate(360deg); } }
 
-/* ── TOOLBAR ── */
 .we-toolbar {
     flex-shrink: 0;
     display: flex;
@@ -393,7 +518,6 @@ body:has(.we-root) .main {
 .we-tool:hover  { background: #f2f2f2; }
 .we-tool:active { background: #e8e8e8; transform: scale(0.97); }
 
-/* ── ALERTS ── */
 .we-alert {
     flex-shrink: 0;
     display: flex; align-items: center; gap: 9px;
@@ -408,7 +532,6 @@ body:has(.we-root) .main {
 }
 .we-alert__close:hover { opacity: 1; }
 
-/* ── SCROLLABLE AREA ── */
 .we-scroll {
     flex: 1;
     overflow-y: auto;
@@ -418,7 +541,6 @@ body:has(.we-root) .main {
     justify-content: center;
 }
 
-/* ── DOCUMENT (paper) ── */
 .we-doc {
     background: #fff;
     border: 1px solid #e0e0e0;
@@ -430,7 +552,6 @@ body:has(.we-root) .main {
     align-self: flex-start;
 }
 
-/* ── COVER ── */
 .we-cover {
     position: relative; min-height: 52px;
     background: #fafafa; border-bottom: 1px dashed #e8e8e8; overflow: hidden;
@@ -459,7 +580,6 @@ body:has(.we-root) .main {
 }
 .we-cover__add:hover { color: #999; }
 
-/* ── TITLE ── */
 .we-title {
     font-size: 38px; font-weight: 800; color: #111;
     letter-spacing: -0.04em; line-height: 1.15;
@@ -469,10 +589,9 @@ body:has(.we-root) .main {
     content: attr(data-placeholder); color: #d8d5ce; pointer-events: none;
 }
 
-/* ── META ── */
 .we-meta {
     display: flex; align-items: center; gap: 10px;
-    padding: 0 52px 22px; border-bottom: 1px solid #f0ede8;
+    padding: 0 52px 22px;
 }
 .we-meta__avatar {
     width: 32px; height: 32px; border-radius: 50%;
@@ -484,7 +603,121 @@ body:has(.we-root) .main {
 .we-meta__name  { font-size: 13px; font-weight: 600; color: #333; line-height: 1.2; }
 .we-meta__date  { font-size: 11.5px; color: #bbb; }
 
-/* ── BODY ── */
+/* ✅ BARU: Styles untuk panel category & tags */
+.we-meta-extra {
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+    padding: 16px 52px 22px;
+    border-top: 1px solid #f0ede8;
+    border-bottom: 1px solid #f0ede8;
+    margin-bottom: 4px;
+    background: #fdfcfb;
+}
+
+.we-field {
+    display: flex;
+    flex-direction: column;
+    gap: 7px;
+}
+
+.we-field__label {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 12px;
+    font-weight: 600;
+    color: #888;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+}
+.we-field__label svg { color: #c8960a; }
+
+.we-field__hint {
+    font-size: 11px;
+    font-weight: 400;
+    color: #bbb;
+    text-transform: none;
+    letter-spacing: 0;
+    margin-left: 4px;
+}
+
+.we-field__select {
+    appearance: none;
+    padding: 8px 32px 8px 12px;
+    border: 1.5px solid #e8e5e0;
+    border-radius: 8px;
+    font-size: 13px;
+    font-family: inherit;
+    color: #333;
+    background: #fff url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='%23999' stroke-width='2.5' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpolyline points='6 9 12 15 18 9'/%3E%3C/svg%3E") no-repeat right 10px center;
+    cursor: pointer;
+    transition: border-color 0.15s;
+    max-width: 260px;
+}
+.we-field__select:focus {
+    outline: none;
+    border-color: #F5A623;
+}
+
+.we-tags-input {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 6px;
+    padding: 7px 10px;
+    border: 1.5px solid #e8e5e0;
+    border-radius: 8px;
+    background: #fff;
+    min-height: 40px;
+    transition: border-color 0.15s;
+    cursor: text;
+}
+.we-tags-input:focus-within {
+    border-color: #F5A623;
+}
+
+.we-tag {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    padding: 3px 8px 3px 10px;
+    background: #fff8ec;
+    border: 1px solid #f5d89a;
+    border-radius: 20px;
+    font-size: 12px;
+    font-weight: 600;
+    color: #c8960a;
+}
+
+.we-tag__remove {
+    background: none;
+    border: none;
+    cursor: pointer;
+    font-size: 14px;
+    color: #c8960a;
+    opacity: 0.6;
+    padding: 0;
+    line-height: 1;
+    display: flex;
+    align-items: center;
+}
+.we-tag__remove:hover { opacity: 1; }
+
+.we-tags-input__field {
+    border: none;
+    outline: none;
+    font-size: 13px;
+    font-family: inherit;
+    color: #333;
+    background: transparent;
+    min-width: 140px;
+    flex: 1;
+    padding: 2px 0;
+}
+.we-tags-input__field::placeholder { color: #ccc; }
+/* END BARU */
+
 .we-body {
     padding: 28px 52px 72px; outline: none;
     font-size: 16.5px; line-height: 1.9; color: #2c2c2c;
@@ -510,6 +743,8 @@ body:has(.we-root) .main {
     .we-scroll      { padding: 16px 8px 60px; }
     .we-title       { font-size: 26px; padding: 28px 20px 12px; }
     .we-meta        { padding: 0 20px 18px; }
+    .we-meta-extra  { padding: 16px 20px 18px; }
     .we-body        { padding: 20px 20px 48px; font-size: 15px; }
+    .we-field__select { max-width: 100%; }
 }
 `

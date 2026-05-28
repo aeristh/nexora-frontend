@@ -213,7 +213,6 @@ export default function SettingsPage() {
                         background: "rgba(255,255,255,0.97)",
                         boxShadow: "0 8px 40px rgba(0,0,0,0.12)",
                     }}>
-                        {/* Header */}
                         <div style={{ marginBottom: 14 }}>
                             <h2 style={{
                                 fontSize: 20, fontWeight: 800, color: "#1c1917",
@@ -226,7 +225,6 @@ export default function SettingsPage() {
                             </p>
                         </div>
 
-                        {/* Field Nama Lengkap */}
                         <div style={{ position: "relative", marginBottom: 6 }}>
                             <svg style={{
                                 position: "absolute", left: 14, top: "50%", transform: "translateY(-50%)",
@@ -261,7 +259,6 @@ export default function SettingsPage() {
                             />
                         </div>
 
-                        {/* Field Email */}
                         <div style={{ position: "relative", marginBottom: 16 }}>
                             <svg style={{
                                 position: "absolute", left: 14, top: "50%", transform: "translateY(-50%)",
@@ -296,7 +293,6 @@ export default function SettingsPage() {
                             />
                         </div>
 
-                        {/* Tombol */}
                         <button
                             onClick={handleEditSubmit}
                             disabled={editLoading}
