@@ -9,7 +9,9 @@ type User = {
     role: "admin" | "user"
 }
 
-const BASE = "http://localhost:3333"
+const BASE = process.env.NEXT_PUBLIC_API_URL || "http://localhost:3333"
+
+
 
 function getInitials(name: string) {
     return name.split(" ").map(n => n[0]).join("").slice(0, 2).toUpperCase()

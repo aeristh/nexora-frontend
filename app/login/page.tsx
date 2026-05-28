@@ -22,43 +22,45 @@ export default function LoginPage() {
     const handleLogin = async () => {
         try {
             setLoading(true)
-            const res = await fetch("http://localhost:3333/login", {
-                method: "POST",
-                headers: { "Content-Type": "application/json" },
-                body: JSON.stringify({ email, password }),
+            const res = await fetch("${process.env.NEXT_PUBLIC_API_URL || process.env.NEXT_PUBLIC_API_URL || "http://localhost:3333"
+
+}/login", {
+        method: "POST",
+            headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ email, password }),
             })
-            const data = await res.json()
+    const data = await res.json()
 
-            if (!res.ok) {
-                showToast(data.errors?.[0]?.message || "Email atau password salah.", "danger")
-                return
-            }
-
-            if (data.user && !data.user.isActive) {
-                showToast("Akun Anda telah dinonaktifkan. Hubungi administrator.", "warning")
-                return
-            }
-
-            localStorage.setItem("token", data.token)
-            localStorage.setItem("user", JSON.stringify(data.user))
-
-            showToast("Login berhasil! Mengalihkan ke dashboard...", "success", () => router.push("/dashboard"))
-        } catch {
-            showToast("Tidak dapat terhubung ke server. Coba lagi.", "danger")
-        } finally {
-            setLoading(false)
-        }
+    if (!res.ok) {
+        showToast(data.errors?.[0]?.message || "Email atau password salah.", "danger")
+        return
     }
 
-    const toastBg: Record<string, string> = {
-        success: "#16a34a",
-        danger: "#dc2626",
-        warning: "#d97706",
+    if (data.user && !data.user.isActive) {
+        showToast("Akun Anda telah dinonaktifkan. Hubungi administrator.", "warning")
+        return
     }
 
-    return (
-        <>
-            <style>{`
+    localStorage.setItem("token", data.token)
+    localStorage.setItem("user", JSON.stringify(data.user))
+
+    showToast("Login berhasil! Mengalihkan ke dashboard...", "success", () => router.push("/dashboard"))
+} catch {
+    showToast("Tidak dapat terhubung ke server. Coba lagi.", "danger")
+} finally {
+    setLoading(false)
+}
+}
+
+const toastBg: Record<string, string> = {
+    success: "#16a34a",
+    danger: "#dc2626",
+    warning: "#d97706",
+}
+
+return (
+    <>
+        <style>{`
                 @import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap');
 
                 .auth-root {
@@ -269,81 +271,81 @@ export default function LoginPage() {
                 }
             `}</style>
 
-            <div className="auth-root">
-                {toast && (
-                    <div style={{
-                        position: "fixed", top: 20, right: 20, zIndex: 9999,
-                        background: toastBg[toast.type], color: "#fff",
-                        padding: "12px 24px", borderRadius: 10,
-                        fontWeight: 500, fontSize: 14,
-                        boxShadow: "0 4px 12px rgba(0,0,0,0.15)",
-                        fontFamily: "'Plus Jakarta Sans', sans-serif",
-                    }}>
-                        {toast.message}
-                    </div>
-                )}
-
-                <div className="auth-card">
-                    <div className="brand-row">
-                        <span className="brand-name">Nexora</span>
-                    </div>
-
-                    <h1 className="auth-title">Welcome Back</h1>
-                    <p className="auth-subtitle">Login to continue to your account</p>
-
-                    <div className="input-group">
-                        <svg className="input-icon" viewBox="0 0 24 24">
-                            <path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z" />
-                            <polyline points="22,6 12,13 2,6" />
-                        </svg>
-                        <input
-                            className="auth-input"
-                            placeholder="Email"
-                            type="email"
-                            value={email}
-                            onChange={(e) => setEmail(e.target.value)}
-                        />
-                    </div>
-
-                    <div className="input-group">
-                        <svg className="input-icon" viewBox="0 0 24 24">
-                            <rect x="3" y="11" width="18" height="11" rx="2" ry="2" />
-                            <path d="M7 11V7a5 5 0 0 1 10 0v4" />
-                        </svg>
-                        <input
-                            className="auth-input"
-                            type={showPassword ? "text" : "password"}
-                            placeholder="Password"
-                            value={password}
-                            onChange={(e) => setPassword(e.target.value)}
-                        />
-                        <button className="eye-btn" onClick={() => setShowPassword(!showPassword)} type="button">
-                            {showPassword ? (
-                                <svg viewBox="0 0 24 24">
-                                    <path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19m-6.72-1.07a3 3 0 1 1-4.24-4.24" />
-                                    <line x1="1" y1="1" x2="23" y2="23" />
-                                </svg>
-                            ) : (
-                                <svg viewBox="0 0 24 24">
-                                    <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z" />
-                                    <circle cx="12" cy="12" r="3" />
-                                </svg>
-                            )}
-                        </button>
-                    </div>
-
-                    <span className="forgot-link">Forgot password?</span>
-
-                    <button className="auth-btn" onClick={handleLogin} disabled={loading}>
-                        {loading ? "Loading..." : "Login"}
-                    </button>
-
-                    <p className="auth-switch">
-                        Belum punya akun?{" "}
-                        <span onClick={() => router.push("/register")}>Register</span>
-                    </p>
+        <div className="auth-root">
+            {toast && (
+                <div style={{
+                    position: "fixed", top: 20, right: 20, zIndex: 9999,
+                    background: toastBg[toast.type], color: "#fff",
+                    padding: "12px 24px", borderRadius: 10,
+                    fontWeight: 500, fontSize: 14,
+                    boxShadow: "0 4px 12px rgba(0,0,0,0.15)",
+                    fontFamily: "'Plus Jakarta Sans', sans-serif",
+                }}>
+                    {toast.message}
                 </div>
+            )}
+
+            <div className="auth-card">
+                <div className="brand-row">
+                    <span className="brand-name">Nexora</span>
+                </div>
+
+                <h1 className="auth-title">Welcome Back</h1>
+                <p className="auth-subtitle">Login to continue to your account</p>
+
+                <div className="input-group">
+                    <svg className="input-icon" viewBox="0 0 24 24">
+                        <path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z" />
+                        <polyline points="22,6 12,13 2,6" />
+                    </svg>
+                    <input
+                        className="auth-input"
+                        placeholder="Email"
+                        type="email"
+                        value={email}
+                        onChange={(e) => setEmail(e.target.value)}
+                    />
+                </div>
+
+                <div className="input-group">
+                    <svg className="input-icon" viewBox="0 0 24 24">
+                        <rect x="3" y="11" width="18" height="11" rx="2" ry="2" />
+                        <path d="M7 11V7a5 5 0 0 1 10 0v4" />
+                    </svg>
+                    <input
+                        className="auth-input"
+                        type={showPassword ? "text" : "password"}
+                        placeholder="Password"
+                        value={password}
+                        onChange={(e) => setPassword(e.target.value)}
+                    />
+                    <button className="eye-btn" onClick={() => setShowPassword(!showPassword)} type="button">
+                        {showPassword ? (
+                            <svg viewBox="0 0 24 24">
+                                <path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19m-6.72-1.07a3 3 0 1 1-4.24-4.24" />
+                                <line x1="1" y1="1" x2="23" y2="23" />
+                            </svg>
+                        ) : (
+                            <svg viewBox="0 0 24 24">
+                                <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z" />
+                                <circle cx="12" cy="12" r="3" />
+                            </svg>
+                        )}
+                    </button>
+                </div>
+
+                <span className="forgot-link">Forgot password?</span>
+
+                <button className="auth-btn" onClick={handleLogin} disabled={loading}>
+                    {loading ? "Loading..." : "Login"}
+                </button>
+
+                <p className="auth-switch">
+                    Belum punya akun?{" "}
+                    <span onClick={() => router.push("/register")}>Register</span>
+                </p>
             </div>
-        </>
-    )
+        </div>
+    </>
+)
 }

@@ -5,7 +5,9 @@ const nextConfig: NextConfig = {
     return [
       {
         source: '/api-uploads/:path*',
-        destination: 'http://localhost:3333/uploads/:path*',
+        destination: '${process.env.NEXT_PUBLIC_API_URL || process.env.NEXT_PUBLIC_API_URL || "http://localhost:3333"
+
+      } / uploads /: path * ',
       },
     ]
   },

@@ -15,7 +15,9 @@ type Blog = {
     updatedAt: string
 }
 
-const BASE = "http://localhost:3333"
+const BASE = process.env.NEXT_PUBLIC_API_URL || "http://localhost:3333"
+
+
 
 function formatDate(iso: string) {
     return new Date(iso).toLocaleDateString("id-ID", {

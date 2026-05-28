@@ -20,7 +20,9 @@ type Blog = {
     createdAt: string
 }
 
-const BASE = "http://localhost:3333"
+const BASE = process.env.NEXT_PUBLIC_API_URL || "http://localhost:3333"
+
+
 const ITEMS_PER_PAGE = 2  // 2 post per batch
 
 function getInitials(name: string) {

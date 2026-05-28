@@ -128,29 +128,31 @@ function ServiceCard({ icon, title, desc, delay }: { icon: React.ReactNode; titl
 }
 
 function LandingBlogCard({ blog, index }: { blog: LandingBlog; index: number }) {
-  const BASE = "http://localhost:3333"
-  const excerpt = stripHtml(blog.content).slice(0, 120) + "…"
+  const BASE = "${process.env.NEXT_PUBLIC_API_URL || process.env.NEXT_PUBLIC_API_URL || "http://localhost:3333"
 
-  return (
-    <Link href={`/blog/${blog.slug}`} className="lp-blog-card" style={{ animationDelay: `${index * 100}ms` }}>
-      <div className="lp-blog-card__img">
-        {blog.coverImage
-          ? <img src={blog.coverImage.replace('/uploads', '/api-uploads')} alt={blog.title} />
-          : <div className="lp-blog-card__img-placeholder"></div>
-        }
+} "
+const excerpt = stripHtml(blog.content).slice(0, 120) + "…"
+
+return (
+  <Link href={`/blog/${blog.slug}`} className="lp-blog-card" style={{ animationDelay: `${index * 100}ms` }}>
+    <div className="lp-blog-card__img">
+      {blog.coverImage
+        ? <img src={blog.coverImage.replace('/uploads', '/api-uploads')} alt={blog.title} />
+        : <div className="lp-blog-card__img-placeholder"></div>
+      }
+    </div>
+    <div className="lp-blog-card__body">
+      <h4 className="lp-blog-card__title">{blog.title}</h4>
+      <p className="lp-blog-card__excerpt">{excerpt}</p>
+      <div className="lp-blog-card__meta">
+        <span className="lp-blog-card__avatar">{getInitials(blog.authorName)}</span>
+        <span className="lp-blog-card__author">{blog.authorName}</span>
+        <span className="lp-blog-card__date">{formatDate(blog.createdAt)}</span>
       </div>
-      <div className="lp-blog-card__body">
-        <h4 className="lp-blog-card__title">{blog.title}</h4>
-        <p className="lp-blog-card__excerpt">{excerpt}</p>
-        <div className="lp-blog-card__meta">
-          <span className="lp-blog-card__avatar">{getInitials(blog.authorName)}</span>
-          <span className="lp-blog-card__author">{blog.authorName}</span>
-          <span className="lp-blog-card__date">{formatDate(blog.createdAt)}</span>
-        </div>
-        <span className="lp-blog-card__cta">Baca Selengkapnya</span>
-      </div>
-    </Link>
-  )
+      <span className="lp-blog-card__cta">Baca Selengkapnya</span>
+    </div>
+  </Link>
+)
 }
 
 function ProjectCard({ title, tag, img, index, slug }: { title: string; tag: string; img: string; index: number; slug: string }) {
@@ -184,369 +186,371 @@ export default function LandingPage() {
   const [galleryPage, setGalleryPage] = useState(0)
 
   const GALLERY_PER_PAGE = 4
-  const BASE = "http://localhost:3333"
+  const BASE = "${process.env.NEXT_PUBLIC_API_URL || process.env.NEXT_PUBLIC_API_URL || "http://localhost:3333"
 
-  useEffect(() => {
-    const onScroll = () => setScrolled(window.scrollY > 40)
-    window.addEventListener("scroll", onScroll)
+} "
 
-    fetch(`${BASE}/gallery/public`)
-      .then(res => res.json())
-      .then(data => { if (Array.isArray(data.data)) setGalleries(data.data) })
-      .catch(() => { })
+useEffect(() => {
+  const onScroll = () => setScrolled(window.scrollY > 40)
+  window.addEventListener("scroll", onScroll)
 
-    fetch(`${BASE}/blogs/public?limit=3`)
-      .then(res => res.json())
-      .then(data => { if (Array.isArray(data.data)) setLatestBlogs(data.data) })
-      .catch(() => { })
+  fetch(`${BASE}/gallery/public`)
+    .then(res => res.json())
+    .then(data => { if (Array.isArray(data.data)) setGalleries(data.data) })
+    .catch(() => { })
 
-    return () => window.removeEventListener("scroll", onScroll)
-  }, [])
+  fetch(`${BASE}/blogs/public?limit=3`)
+    .then(res => res.json())
+    .then(data => { if (Array.isArray(data.data)) setLatestBlogs(data.data) })
+    .catch(() => { })
 
-  const navLinks = [
-    { href: "#about", label: "About" },
-    { href: "#services", label: "Services" },
-    { href: "#gallery", label: "Gallery" },
-    { href: "#blog", label: "Articles" },
-    { href: "#projects", label: "Projects" },
-    { href: "#contact", label: "Contact" },
-  ]
+  return () => window.removeEventListener("scroll", onScroll)
+}, [])
 
-  return (
-    <>
-      <style>{landingStyles}</style>
-      <div className="lp-root">
+const navLinks = [
+  { href: "#about", label: "About" },
+  { href: "#services", label: "Services" },
+  { href: "#gallery", label: "Gallery" },
+  { href: "#blog", label: "Articles" },
+  { href: "#projects", label: "Projects" },
+  { href: "#contact", label: "Contact" },
+]
 
-        <nav className={`lp-nav ${scrolled ? "lp-nav--scrolled" : ""}`}>
-          <div className="lp-nav__inner">
-            <div className="lp-nav__brand">
-              Nexora<span className="lp-brand__dot">.</span>
-            </div>
-            <div className={`lp-nav__links ${menuOpen ? "lp-nav__links--open" : ""}`}>
-              {navLinks.map(({ href, label }) => (
-                <a key={href} href={href} className="lp-nav__link" onClick={() => setMenuOpen(false)}>
-                  {label}
-                </a>
-              ))}
-            </div>
-            <div className="lp-nav__actions">
-              <Link href="/login" className="lp-btn lp-btn--footer-outline lp-btn--sm">Login</Link>
-              <Link href="/register" className="lp-btn lp-btn--primary lp-btn--sm">Register</Link>
-            </div>
-            <button className="lp-nav__hamburger" onClick={() => setMenuOpen(!menuOpen)} aria-label="Toggle menu">
-              <span /><span /><span />
-            </button>
+return (
+  <>
+    <style>{landingStyles}</style>
+    <div className="lp-root">
+
+      <nav className={`lp-nav ${scrolled ? "lp-nav--scrolled" : ""}`}>
+        <div className="lp-nav__inner">
+          <div className="lp-nav__brand">
+            Nexora<span className="lp-brand__dot">.</span>
           </div>
-        </nav>
+          <div className={`lp-nav__links ${menuOpen ? "lp-nav__links--open" : ""}`}>
+            {navLinks.map(({ href, label }) => (
+              <a key={href} href={href} className="lp-nav__link" onClick={() => setMenuOpen(false)}>
+                {label}
+              </a>
+            ))}
+          </div>
+          <div className="lp-nav__actions">
+            <Link href="/login" className="lp-btn lp-btn--footer-outline lp-btn--sm">Login</Link>
+            <Link href="/register" className="lp-btn lp-btn--primary lp-btn--sm">Register</Link>
+          </div>
+          <button className="lp-nav__hamburger" onClick={() => setMenuOpen(!menuOpen)} aria-label="Toggle menu">
+            <span /><span /><span />
+          </button>
+        </div>
+      </nav>
 
-        <section className="lp-banner">
-          <div className="lp-banner__bg">
+      <section className="lp-banner">
+        <div className="lp-banner__bg">
+          <img
+            src="/background.jpg"
+            alt="Banner"
+            className="lp-banner__bgimg"
+            onError={(e) => { (e.target as HTMLImageElement).style.display = "none" }}
+          />
+          <div className="lp-banner__overlay" />
+        </div>
+        <div className="lp-banner__content">
+          <div className="lp-banner__avatar-wrap">
             <img
-              src="/background.jpg"
-              alt="Banner"
-              className="lp-banner__bgimg"
+              src="/taylor.png"
+              alt="Taylor Swift"
+              className="lp-banner__avatar"
               onError={(e) => { (e.target as HTMLImageElement).style.display = "none" }}
             />
-            <div className="lp-banner__overlay" />
           </div>
-          <div className="lp-banner__content">
-            <div className="lp-banner__avatar-wrap">
+          <h2 className="lp-banner__name">Taylor Swift</h2>
+          <p className="lp-banner__tagline">Full Stack Developer &amp; System Builder</p>
+        </div>
+      </section>
+
+      <section className="lp-section lp-section--about" id="about">
+        <div className="lp-section__header">
+          <p className="lp-section__eyebrow">About Me</p>
+          <h2 className="lp-section__title">Who I Am</h2>
+          <div className="lp-section__divider" />
+        </div>
+        <div className="lp-about-body">
+          <div className="lp-about__photo-col">
+            <div className="lp-about__photo-frame">
               <img
                 src="/taylor.png"
                 alt="Taylor Swift"
-                className="lp-banner__avatar"
+                className="lp-about__photo"
                 onError={(e) => { (e.target as HTMLImageElement).style.display = "none" }}
               />
-            </div>
-            <h2 className="lp-banner__name">Taylor Swift</h2>
-            <p className="lp-banner__tagline">Full Stack Developer &amp; System Builder</p>
-          </div>
-        </section>
-
-        <section className="lp-section lp-section--about" id="about">
-          <div className="lp-section__header">
-            <p className="lp-section__eyebrow">About Me</p>
-            <h2 className="lp-section__title">Who I Am</h2>
-            <div className="lp-section__divider" />
-          </div>
-          <div className="lp-about-body">
-            <div className="lp-about__photo-col">
-              <div className="lp-about__photo-frame">
-                <img
-                  src="/taylor.png"
-                  alt="Taylor Swift"
-                  className="lp-about__photo"
-                  onError={(e) => { (e.target as HTMLImageElement).style.display = "none" }}
-                />
-                <div className="lp-about__photo-ring" />
-              </div>
-            </div>
-            <div className="lp-about__text-col">
-              <p className="lp-about__eyebrow-badge">
-                <span className="lp-badge__dot" />
-                Full Stack Web System
-              </p>
-              <h3 className="lp-about__sub">
-                Web Developer<span className="lp-sep">, </span>
-                <span className="lp-hero__accent">System Builder</span>
-                <span className="lp-sep">, </span>
-                UI Designer<span className="lp-sep">.</span>
-              </h3>
-              <p className="lp-about__desc">
-                Hi, I'm Taylor Swift. Nexora is my professional ecosystem built with Next.js, AdonisJS, and PostgreSQL — featuring full CRUD operations, role-based access control, and a clean, modern UI experience.
-              </p>
-              <div className="lp-about__actions">
-                <a href="#projects" className="lp-btn lp-btn--primary lp-btn--lg">View My Projects</a>
-                <a href="#contact" className="lp-btn lp-btn--outline lp-btn--lg">Contact Me</a>
-              </div>
+              <div className="lp-about__photo-ring" />
             </div>
           </div>
-        </section>
-
-        <div className="lp-band">
-          <div className="lp-band__inner">
-            {["Next.js", "AdonisJS", "PostgreSQL", "REST API", "JWT Auth", "Role-Based Access", "CRUD System"].map((t, i) => (
-              <span key={i} className="lp-band__item">
-                <span className="lp-band__dot" />{t}
-              </span>
-            ))}
+          <div className="lp-about__text-col">
+            <p className="lp-about__eyebrow-badge">
+              <span className="lp-badge__dot" />
+              Full Stack Web System
+            </p>
+            <h3 className="lp-about__sub">
+              Web Developer<span className="lp-sep">, </span>
+              <span className="lp-hero__accent">System Builder</span>
+              <span className="lp-sep">, </span>
+              UI Designer<span className="lp-sep">.</span>
+            </h3>
+            <p className="lp-about__desc">
+              Hi, I'm Taylor Swift. Nexora is my professional ecosystem built with Next.js, AdonisJS, and PostgreSQL — featuring full CRUD operations, role-based access control, and a clean, modern UI experience.
+            </p>
+            <div className="lp-about__actions">
+              <a href="#projects" className="lp-btn lp-btn--primary lp-btn--lg">View My Projects</a>
+              <a href="#contact" className="lp-btn lp-btn--outline lp-btn--lg">Contact Me</a>
+            </div>
           </div>
         </div>
+      </section>
 
-        <section className="lp-section" id="services">
-          <div className="lp-section__header">
-            <p className="lp-section__eyebrow">Services</p>
-            <h2 className="lp-section__title">What I Provide</h2>
-            <p className="lp-section__sub">
-              A complete set of capabilities built into this system — from backend APIs to polished frontends.
-            </p>
-            <div className="lp-section__divider" />
-          </div>
-          <div className="lp-services-grid">
-            {services.map((s, i) => <ServiceCard key={i} {...s} delay={i * 80} />)}
-          </div>
-        </section>
-
-        <section className="lp-section lp-section--gallery" id="gallery">
-          <div className="lp-section__header">
-            <p className="lp-section__eyebrow">Gallery</p>
-            <h2 className="lp-section__title">Photo Gallery</h2>
-            <p className="lp-section__sub">A collection of moments and visuals curated from our work.</p>
-            <div className="lp-section__divider" />
-          </div>
-
-          {galleries.length === 0 ? (
-            <p style={{ textAlign: "center", color: "var(--text-muted)", fontSize: 14 }}>Belum ada foto.</p>
-          ) : (() => {
-            const totalPages = Math.ceil(galleries.length / GALLERY_PER_PAGE)
-            const pageItems = galleries.slice(galleryPage * GALLERY_PER_PAGE, (galleryPage + 1) * GALLERY_PER_PAGE)
-            return (
-              <>
-                <div style={{ display: "grid", gridTemplateColumns: "repeat(4, 1fr)", gap: 16, maxWidth: 1200, margin: "0 auto" }}>
-                  {pageItems.map((item) => (
-                    <div
-                      key={item.id}
-                      onClick={() => setLightbox(item)}
-                      style={{
-                        borderRadius: 16, overflow: "hidden", cursor: "pointer",
-                        position: "relative", boxShadow: "0 4px 20px rgba(0,0,0,0.10)",
-                        transition: "transform 0.28s cubic-bezier(.22,.68,0,1.2), box-shadow 0.28s ease",
-                        aspectRatio: "4/3",
-                      }}
-                      onMouseEnter={e => {
-                        (e.currentTarget as HTMLDivElement).style.transform = "translateY(-6px) scale(1.01)"
-                          ; (e.currentTarget as HTMLDivElement).style.boxShadow = "0 16px 40px rgba(0,0,0,0.18)"
-                      }}
-                      onMouseLeave={e => {
-                        (e.currentTarget as HTMLDivElement).style.transform = "translateY(0) scale(1)"
-                          ; (e.currentTarget as HTMLDivElement).style.boxShadow = "0 4px 20px rgba(0,0,0,0.10)"
-                      }}
-                    >
-                      <img
-                        src={`${BASE}${item.imagePath}`}
-                        alt={item.title}
-                        style={{ width: "100%", height: "100%", objectFit: "cover", display: "block", transition: "transform 0.4s ease" }}
-                        onMouseEnter={e => (e.currentTarget as HTMLImageElement).style.transform = "scale(1.06)"}
-                        onMouseLeave={e => (e.currentTarget as HTMLImageElement).style.transform = "scale(1)"}
-                      />
-                      <div style={{ position: "absolute", inset: 0, background: "linear-gradient(to top, rgba(0,0,0,0.65) 0%, rgba(0,0,0,0) 50%)", pointerEvents: "none" }} />
-                      <div style={{ position: "absolute", bottom: 0, left: 0, right: 0, padding: "12px 14px" }}>
-                        <p style={{ fontSize: 13, fontWeight: 700, color: "#fff", margin: 0, whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis", textShadow: "0 1px 4px rgba(0,0,0,0.4)" }}>
-                          {item.title}
-                        </p>
-                        {item.description && (
-                          <p style={{ fontSize: 11, color: "rgba(255,255,255,0.7)", margin: "2px 0 0", whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>
-                            {item.description}
-                          </p>
-                        )}
-                      </div>
-                    </div>
-                  ))}
-                </div>
-
-                {totalPages > 1 && (
-                  <div style={{ display: "flex", alignItems: "center", justifyContent: "center", gap: 16, marginTop: 36 }}>
-                    <button
-                      onClick={() => setGalleryPage(p => Math.max(0, p - 1))}
-                      disabled={galleryPage === 0}
-                      style={{ padding: "10px 28px", borderRadius: 999, background: galleryPage === 0 ? "rgba(0,0,0,0.08)" : "var(--navy)", color: galleryPage === 0 ? "var(--text-muted)" : "var(--earth)", border: "none", fontSize: 14, fontWeight: 700, cursor: galleryPage === 0 ? "not-allowed" : "pointer", transition: "all 0.2s" }}
-                    >Prev</button>
-                    <span style={{ fontSize: 13, color: "var(--text-muted)", fontWeight: 600 }}>{galleryPage + 1} / {totalPages}</span>
-                    <button
-                      onClick={() => setGalleryPage(p => Math.min(totalPages - 1, p + 1))}
-                      disabled={galleryPage === totalPages - 1}
-                      style={{ padding: "10px 28px", borderRadius: 999, background: galleryPage === totalPages - 1 ? "rgba(0,0,0,0.08)" : "var(--navy)", color: galleryPage === totalPages - 1 ? "var(--text-muted)" : "var(--earth)", border: "none", fontSize: 14, fontWeight: 700, cursor: galleryPage === totalPages - 1 ? "not-allowed" : "pointer", transition: "all 0.2s" }}
-                    >Next</button>
-                  </div>
-                )}
-                <p style={{ textAlign: "center", fontSize: 12, color: "var(--text-muted)", marginTop: 12 }}>
-                  Menampilkan {pageItems.length} dari {galleries.length} foto &nbsp;·&nbsp; Halaman {galleryPage + 1} dari {totalPages}
-                </p>
-              </>
-            )
-          })()}
-        </section>
-
-        <section className="lp-section lp-section--blog" id="blog">
-          <div className="lp-section__header">
-            <p className="lp-section__eyebrow">Blog</p>
-            <h2 className="lp-section__title">Artikel Terbaru</h2>
-            <p className="lp-section__sub">Insight, cerita, dan update terbaru dari tim kami.</p>
-            <div className="lp-section__divider" />
-          </div>
-          {latestBlogs.length === 0 ? (
-            <p style={{ textAlign: "center", color: "var(--text-muted)", fontSize: 14 }}>Belum ada artikel.</p>
-          ) : (
-            <>
-              <div className="lp-blog-grid">
-                {latestBlogs.map((blog, i) => <LandingBlogCard key={blog.id} blog={blog} index={i} />)}
-              </div>
-              <div style={{ textAlign: "center", marginTop: 36 }}>
-                <Link href="/articles" className="lp-btn lp-btn--dark">Lihat Semua Artikel</Link>
-              </div>
-            </>
-          )}
-        </section>
-
-        <section className="lp-section lp-section--projects" id="projects">
-          <div className="lp-section__header">
-            <p className="lp-section__eyebrow lp-section__eyebrow--projects">Portfolios</p>
-            <h2 className="lp-section__title lp-section__title--projects">Project Gallery</h2>
-            <p className="lp-section__sub lp-section__sub--projects">A collection of modules and features built within this system.</p>
-            <div className="lp-section__divider lp-section__divider--projects" />
-          </div>
-          <div className="lp-projects-grid">
-            {projects.map((p, i) => <ProjectCard key={i} {...p} index={i} />)}
-          </div>
-        </section>
-
-        <section className="lp-section" id="hire">
-          <div className="lp-section__header">
-            <p className="lp-section__eyebrow">Access</p>
-            <h2 className="lp-section__title">Join The System</h2>
-            <p className="lp-section__sub">Create an account to access the full HR management experience — or log in if you already have one.</p>
-            <div className="lp-section__divider" />
-          </div>
-          <div className="lp-hire-grid">
-            <div className="lp-hire-card">
-              <div className="lp-hire-card__icon">
-                <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
-                  <circle cx="12" cy="8" r="4" /><path d="M20 21a8 8 0 1 0-16 0" />
-                  <line x1="12" y1="14" x2="12" y2="20" /><line x1="9" y1="17" x2="15" y2="17" />
-                </svg>
-              </div>
-              <p className="lp-hire-card__platform">New User</p>
-              <p className="lp-hire-card__desc">Start with a fresh account and explore all features.</p>
-              <Link href="/register" className="lp-btn lp-btn--primary">Register Now</Link>
-            </div>
-            <div className="lp-hire-card lp-hire-card--accent">
-              <div className="lp-hire-card__icon lp-hire-card__icon--filled">
-                <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
-                  <rect x="3" y="11" width="18" height="11" rx="2" ry="2" /><path d="M7 11V7a5 5 0 0 1 10 0v4" />
-                </svg>
-              </div>
-              <p className="lp-hire-card__platform">Existing User</p>
-              <p className="lp-hire-card__desc">Sign in to your account to manage your team.</p>
-              <Link href="/login" className="lp-btn lp-btn--dark">Login</Link>
-            </div>
-            <div className="lp-hire-card">
-              <div className="lp-hire-card__icon">
-                <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
-                  <circle cx="12" cy="8" r="4" /><path d="M6 20v-2a6 6 0 0 1 12 0v2" />
-                  <polyline points="16 11 18 13 22 9" />
-                </svg>
-              </div>
-              <p className="lp-hire-card__platform">Admin Access</p>
-              <p className="lp-hire-card__desc">Contact the administrator for elevated permissions.</p>
-              <a href="#contact" className="lp-btn lp-btn--outline">Contact Me</a>
-            </div>
-          </div>
-        </section>
-
-        <section className="lp-section lp-section--contact" id="contact">
-          <div className="lp-section__header">
-            <p className="lp-section__eyebrow lp-section__eyebrow--light">Contact</p>
-            <h2 className="lp-section__title lp-section__title--light">How To Reach Me</h2>
-            <p className="lp-section__sub lp-section__sub--light">Reach out through any of the channels below — I'll get back to you promptly.</p>
-            <div className="lp-section__divider lp-section__divider--earth" />
-          </div>
-          <div className="lp-contact-list">
-            <a href="https://wa.me/6285807254735" target="_blank" rel="noopener noreferrer" className="lp-contact-item">
-              <span className="lp-contact-item__icon"><IconWA /></span>
-              <span className="lp-contact-item__label">WhatsApp</span>
-              <span className="lp-contact-item__text">+62 858-0725-4735</span>
-              <span className="lp-contact-item__arrow">→</span>
-            </a>
-            <a href="mailto:xciaaan@email.com" className="lp-contact-item">
-              <span className="lp-contact-item__icon"><IconMail /></span>
-              <span className="lp-contact-item__label">Email</span>
-              <span className="lp-contact-item__text">xciaaan@email.com</span>
-              <span className="lp-contact-item__arrow">→</span>
-            </a>
-            <a href="https://instagram.com/secrett_zn" target="_blank" rel="noopener noreferrer" className="lp-contact-item">
-              <span className="lp-contact-item__icon"><IconIG /></span>
-              <span className="lp-contact-item__label">Instagram</span>
-              <span className="lp-contact-item__text">@secrett_zn</span>
-              <span className="lp-contact-item__arrow">→</span>
-            </a>
-            <a href="https://tiktok.com/@aeristh4u" target="_blank" rel="noopener noreferrer" className="lp-contact-item">
-              <span className="lp-contact-item__icon"><IconTiktok /></span>
-              <span className="lp-contact-item__label">TikTok</span>
-              <span className="lp-contact-item__text">@aeristh4u</span>
-              <span className="lp-contact-item__arrow">→</span>
-            </a>
-          </div>
-        </section>
-
-        <footer className="lp-footer">
-          <div className="lp-footer__inner">
-            <span className="lp-footer__brand">Nexora<span className="lp-brand__dot">.</span></span>
-            <p className="lp-footer__copy">© {new Date().getFullYear()} Taylor Swift — Nexora Management System.</p>
-          </div>
-        </footer>
-
-        {lightbox && (
-          <div
-            onClick={() => setLightbox(null)}
-            style={{ position: "fixed", inset: 0, zIndex: 1000, background: "rgba(0,0,0,0.85)", display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", cursor: "zoom-out", padding: 24 }}
-          >
-            <img
-              src={`${BASE}${lightbox.imagePath}`}
-              alt={lightbox.title}
-              style={{ maxWidth: "90vw", maxHeight: "80vh", objectFit: "contain", borderRadius: 12, boxShadow: "0 8px 40px rgba(0,0,0,0.6)" }}
-              onClick={e => e.stopPropagation()}
-            />
-            <p style={{ color: "#fff", fontWeight: 600, fontSize: 16, marginTop: 14 }}>{lightbox.title}</p>
-            {lightbox.description && (
-              <p style={{ color: "rgba(255,255,255,0.5)", fontSize: 13, marginTop: 4 }}>{lightbox.description}</p>
-            )}
-            <p style={{ color: "rgba(255,255,255,0.3)", fontSize: 12, marginTop: 12 }}>Klik di luar gambar untuk tutup</p>
-          </div>
-        )}
-
+      <div className="lp-band">
+        <div className="lp-band__inner">
+          {["Next.js", "AdonisJS", "PostgreSQL", "REST API", "JWT Auth", "Role-Based Access", "CRUD System"].map((t, i) => (
+            <span key={i} className="lp-band__item">
+              <span className="lp-band__dot" />{t}
+            </span>
+          ))}
+        </div>
       </div>
-    </>
-  )
+
+      <section className="lp-section" id="services">
+        <div className="lp-section__header">
+          <p className="lp-section__eyebrow">Services</p>
+          <h2 className="lp-section__title">What I Provide</h2>
+          <p className="lp-section__sub">
+            A complete set of capabilities built into this system — from backend APIs to polished frontends.
+          </p>
+          <div className="lp-section__divider" />
+        </div>
+        <div className="lp-services-grid">
+          {services.map((s, i) => <ServiceCard key={i} {...s} delay={i * 80} />)}
+        </div>
+      </section>
+
+      <section className="lp-section lp-section--gallery" id="gallery">
+        <div className="lp-section__header">
+          <p className="lp-section__eyebrow">Gallery</p>
+          <h2 className="lp-section__title">Photo Gallery</h2>
+          <p className="lp-section__sub">A collection of moments and visuals curated from our work.</p>
+          <div className="lp-section__divider" />
+        </div>
+
+        {galleries.length === 0 ? (
+          <p style={{ textAlign: "center", color: "var(--text-muted)", fontSize: 14 }}>Belum ada foto.</p>
+        ) : (() => {
+          const totalPages = Math.ceil(galleries.length / GALLERY_PER_PAGE)
+          const pageItems = galleries.slice(galleryPage * GALLERY_PER_PAGE, (galleryPage + 1) * GALLERY_PER_PAGE)
+          return (
+            <>
+              <div style={{ display: "grid", gridTemplateColumns: "repeat(4, 1fr)", gap: 16, maxWidth: 1200, margin: "0 auto" }}>
+                {pageItems.map((item) => (
+                  <div
+                    key={item.id}
+                    onClick={() => setLightbox(item)}
+                    style={{
+                      borderRadius: 16, overflow: "hidden", cursor: "pointer",
+                      position: "relative", boxShadow: "0 4px 20px rgba(0,0,0,0.10)",
+                      transition: "transform 0.28s cubic-bezier(.22,.68,0,1.2), box-shadow 0.28s ease",
+                      aspectRatio: "4/3",
+                    }}
+                    onMouseEnter={e => {
+                      (e.currentTarget as HTMLDivElement).style.transform = "translateY(-6px) scale(1.01)"
+                        ; (e.currentTarget as HTMLDivElement).style.boxShadow = "0 16px 40px rgba(0,0,0,0.18)"
+                    }}
+                    onMouseLeave={e => {
+                      (e.currentTarget as HTMLDivElement).style.transform = "translateY(0) scale(1)"
+                        ; (e.currentTarget as HTMLDivElement).style.boxShadow = "0 4px 20px rgba(0,0,0,0.10)"
+                    }}
+                  >
+                    <img
+                      src={`${BASE}${item.imagePath}`}
+                      alt={item.title}
+                      style={{ width: "100%", height: "100%", objectFit: "cover", display: "block", transition: "transform 0.4s ease" }}
+                      onMouseEnter={e => (e.currentTarget as HTMLImageElement).style.transform = "scale(1.06)"}
+                      onMouseLeave={e => (e.currentTarget as HTMLImageElement).style.transform = "scale(1)"}
+                    />
+                    <div style={{ position: "absolute", inset: 0, background: "linear-gradient(to top, rgba(0,0,0,0.65) 0%, rgba(0,0,0,0) 50%)", pointerEvents: "none" }} />
+                    <div style={{ position: "absolute", bottom: 0, left: 0, right: 0, padding: "12px 14px" }}>
+                      <p style={{ fontSize: 13, fontWeight: 700, color: "#fff", margin: 0, whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis", textShadow: "0 1px 4px rgba(0,0,0,0.4)" }}>
+                        {item.title}
+                      </p>
+                      {item.description && (
+                        <p style={{ fontSize: 11, color: "rgba(255,255,255,0.7)", margin: "2px 0 0", whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>
+                          {item.description}
+                        </p>
+                      )}
+                    </div>
+                  </div>
+                ))}
+              </div>
+
+              {totalPages > 1 && (
+                <div style={{ display: "flex", alignItems: "center", justifyContent: "center", gap: 16, marginTop: 36 }}>
+                  <button
+                    onClick={() => setGalleryPage(p => Math.max(0, p - 1))}
+                    disabled={galleryPage === 0}
+                    style={{ padding: "10px 28px", borderRadius: 999, background: galleryPage === 0 ? "rgba(0,0,0,0.08)" : "var(--navy)", color: galleryPage === 0 ? "var(--text-muted)" : "var(--earth)", border: "none", fontSize: 14, fontWeight: 700, cursor: galleryPage === 0 ? "not-allowed" : "pointer", transition: "all 0.2s" }}
+                  >Prev</button>
+                  <span style={{ fontSize: 13, color: "var(--text-muted)", fontWeight: 600 }}>{galleryPage + 1} / {totalPages}</span>
+                  <button
+                    onClick={() => setGalleryPage(p => Math.min(totalPages - 1, p + 1))}
+                    disabled={galleryPage === totalPages - 1}
+                    style={{ padding: "10px 28px", borderRadius: 999, background: galleryPage === totalPages - 1 ? "rgba(0,0,0,0.08)" : "var(--navy)", color: galleryPage === totalPages - 1 ? "var(--text-muted)" : "var(--earth)", border: "none", fontSize: 14, fontWeight: 700, cursor: galleryPage === totalPages - 1 ? "not-allowed" : "pointer", transition: "all 0.2s" }}
+                  >Next</button>
+                </div>
+              )}
+              <p style={{ textAlign: "center", fontSize: 12, color: "var(--text-muted)", marginTop: 12 }}>
+                Menampilkan {pageItems.length} dari {galleries.length} foto &nbsp;·&nbsp; Halaman {galleryPage + 1} dari {totalPages}
+              </p>
+            </>
+          )
+        })()}
+      </section>
+
+      <section className="lp-section lp-section--blog" id="blog">
+        <div className="lp-section__header">
+          <p className="lp-section__eyebrow">Blog</p>
+          <h2 className="lp-section__title">Artikel Terbaru</h2>
+          <p className="lp-section__sub">Insight, cerita, dan update terbaru dari tim kami.</p>
+          <div className="lp-section__divider" />
+        </div>
+        {latestBlogs.length === 0 ? (
+          <p style={{ textAlign: "center", color: "var(--text-muted)", fontSize: 14 }}>Belum ada artikel.</p>
+        ) : (
+          <>
+            <div className="lp-blog-grid">
+              {latestBlogs.map((blog, i) => <LandingBlogCard key={blog.id} blog={blog} index={i} />)}
+            </div>
+            <div style={{ textAlign: "center", marginTop: 36 }}>
+              <Link href="/articles" className="lp-btn lp-btn--dark">Lihat Semua Artikel</Link>
+            </div>
+          </>
+        )}
+      </section>
+
+      <section className="lp-section lp-section--projects" id="projects">
+        <div className="lp-section__header">
+          <p className="lp-section__eyebrow lp-section__eyebrow--projects">Portfolios</p>
+          <h2 className="lp-section__title lp-section__title--projects">Project Gallery</h2>
+          <p className="lp-section__sub lp-section__sub--projects">A collection of modules and features built within this system.</p>
+          <div className="lp-section__divider lp-section__divider--projects" />
+        </div>
+        <div className="lp-projects-grid">
+          {projects.map((p, i) => <ProjectCard key={i} {...p} index={i} />)}
+        </div>
+      </section>
+
+      <section className="lp-section" id="hire">
+        <div className="lp-section__header">
+          <p className="lp-section__eyebrow">Access</p>
+          <h2 className="lp-section__title">Join The System</h2>
+          <p className="lp-section__sub">Create an account to access the full HR management experience — or log in if you already have one.</p>
+          <div className="lp-section__divider" />
+        </div>
+        <div className="lp-hire-grid">
+          <div className="lp-hire-card">
+            <div className="lp-hire-card__icon">
+              <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
+                <circle cx="12" cy="8" r="4" /><path d="M20 21a8 8 0 1 0-16 0" />
+                <line x1="12" y1="14" x2="12" y2="20" /><line x1="9" y1="17" x2="15" y2="17" />
+              </svg>
+            </div>
+            <p className="lp-hire-card__platform">New User</p>
+            <p className="lp-hire-card__desc">Start with a fresh account and explore all features.</p>
+            <Link href="/register" className="lp-btn lp-btn--primary">Register Now</Link>
+          </div>
+          <div className="lp-hire-card lp-hire-card--accent">
+            <div className="lp-hire-card__icon lp-hire-card__icon--filled">
+              <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
+                <rect x="3" y="11" width="18" height="11" rx="2" ry="2" /><path d="M7 11V7a5 5 0 0 1 10 0v4" />
+              </svg>
+            </div>
+            <p className="lp-hire-card__platform">Existing User</p>
+            <p className="lp-hire-card__desc">Sign in to your account to manage your team.</p>
+            <Link href="/login" className="lp-btn lp-btn--dark">Login</Link>
+          </div>
+          <div className="lp-hire-card">
+            <div className="lp-hire-card__icon">
+              <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
+                <circle cx="12" cy="8" r="4" /><path d="M6 20v-2a6 6 0 0 1 12 0v2" />
+                <polyline points="16 11 18 13 22 9" />
+              </svg>
+            </div>
+            <p className="lp-hire-card__platform">Admin Access</p>
+            <p className="lp-hire-card__desc">Contact the administrator for elevated permissions.</p>
+            <a href="#contact" className="lp-btn lp-btn--outline">Contact Me</a>
+          </div>
+        </div>
+      </section>
+
+      <section className="lp-section lp-section--contact" id="contact">
+        <div className="lp-section__header">
+          <p className="lp-section__eyebrow lp-section__eyebrow--light">Contact</p>
+          <h2 className="lp-section__title lp-section__title--light">How To Reach Me</h2>
+          <p className="lp-section__sub lp-section__sub--light">Reach out through any of the channels below — I'll get back to you promptly.</p>
+          <div className="lp-section__divider lp-section__divider--earth" />
+        </div>
+        <div className="lp-contact-list">
+          <a href="https://wa.me/6285807254735" target="_blank" rel="noopener noreferrer" className="lp-contact-item">
+            <span className="lp-contact-item__icon"><IconWA /></span>
+            <span className="lp-contact-item__label">WhatsApp</span>
+            <span className="lp-contact-item__text">+62 858-0725-4735</span>
+            <span className="lp-contact-item__arrow">→</span>
+          </a>
+          <a href="mailto:xciaaan@email.com" className="lp-contact-item">
+            <span className="lp-contact-item__icon"><IconMail /></span>
+            <span className="lp-contact-item__label">Email</span>
+            <span className="lp-contact-item__text">xciaaan@email.com</span>
+            <span className="lp-contact-item__arrow">→</span>
+          </a>
+          <a href="https://instagram.com/secrett_zn" target="_blank" rel="noopener noreferrer" className="lp-contact-item">
+            <span className="lp-contact-item__icon"><IconIG /></span>
+            <span className="lp-contact-item__label">Instagram</span>
+            <span className="lp-contact-item__text">@secrett_zn</span>
+            <span className="lp-contact-item__arrow">→</span>
+          </a>
+          <a href="https://tiktok.com/@aeristh4u" target="_blank" rel="noopener noreferrer" className="lp-contact-item">
+            <span className="lp-contact-item__icon"><IconTiktok /></span>
+            <span className="lp-contact-item__label">TikTok</span>
+            <span className="lp-contact-item__text">@aeristh4u</span>
+            <span className="lp-contact-item__arrow">→</span>
+          </a>
+        </div>
+      </section>
+
+      <footer className="lp-footer">
+        <div className="lp-footer__inner">
+          <span className="lp-footer__brand">Nexora<span className="lp-brand__dot">.</span></span>
+          <p className="lp-footer__copy">© {new Date().getFullYear()} Taylor Swift — Nexora Management System.</p>
+        </div>
+      </footer>
+
+      {lightbox && (
+        <div
+          onClick={() => setLightbox(null)}
+          style={{ position: "fixed", inset: 0, zIndex: 1000, background: "rgba(0,0,0,0.85)", display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", cursor: "zoom-out", padding: 24 }}
+        >
+          <img
+            src={`${BASE}${lightbox.imagePath}`}
+            alt={lightbox.title}
+            style={{ maxWidth: "90vw", maxHeight: "80vh", objectFit: "contain", borderRadius: 12, boxShadow: "0 8px 40px rgba(0,0,0,0.6)" }}
+            onClick={e => e.stopPropagation()}
+          />
+          <p style={{ color: "#fff", fontWeight: 600, fontSize: 16, marginTop: 14 }}>{lightbox.title}</p>
+          {lightbox.description && (
+            <p style={{ color: "rgba(255,255,255,0.5)", fontSize: 13, marginTop: 4 }}>{lightbox.description}</p>
+          )}
+          <p style={{ color: "rgba(255,255,255,0.3)", fontSize: 12, marginTop: 12 }}>Klik di luar gambar untuk tutup</p>
+        </div>
+      )}
+
+    </div>
+  </>
+)
 }
 
 const landingStyles = `

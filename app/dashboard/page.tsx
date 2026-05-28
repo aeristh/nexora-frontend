@@ -51,7 +51,9 @@ export default function Home() {
   const [backendOk, setBackendOk] = useState<boolean | null>(null)
   const [loading, setLoading] = useState(true)
 
-  const API = "http://localhost:3333"
+  const API = process.env.NEXT_PUBLIC_API_URL || "http://localhost:3333"
+
+
 
   useEffect(() => {
     const token = localStorage.getItem("token")

@@ -14,7 +14,9 @@ type Blog = {
     createdAt: string
 }
 
-const BASE = "http://localhost:3333"
+const BASE = process.env.NEXT_PUBLIC_API_URL || "http://localhost:3333"
+
+
 const ITEMS_PER_PAGE = 3  // Tampil 3 per batch
 
 function stripHtml(html: string) {
