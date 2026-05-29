@@ -12,7 +12,6 @@ type User = {
 
 const BASE = process.env.NEXT_PUBLIC_API_URL || "http://localhost:3333"
 
-// Pilihan kategori — bisa kamu tambah/ubah sesuai kebutuhan
 const CATEGORY_OPTIONS = [
     "Teknologi",
     "Bisnis",
@@ -42,7 +41,6 @@ function BlogWriteContent() {
     const editorRef = useRef<HTMLDivElement>(null)
     const titleRef = useRef<HTMLDivElement>(null)
 
-    // ✅ BARU: state untuk category dan tags
     const [category, setCategory] = useState("")
     const [tags, setTags] = useState<string[]>([])
     const [tagInput, setTagInput] = useState("")
@@ -51,7 +49,6 @@ function BlogWriteContent() {
     const editId = searchParams.get("id")
     const [isEditMode, setIsEditMode] = useState(false)
 
-    // Load user dari localStorage
     useEffect(() => {
         const raw = localStorage.getItem("user")
         if (raw) {
@@ -79,7 +76,6 @@ function BlogWriteContent() {
                         : `${BASE}${blog.coverImage}`
                     setCoverPreview(src)
                 }
-                // ✅ BARU: load category & tags saat edit
                 if (blog.category) setCategory(blog.category)
                 if (blog.tags && Array.isArray(blog.tags)) setTags(blog.tags)
             } catch {
@@ -101,7 +97,6 @@ function BlogWriteContent() {
         setCoverPreview(URL.createObjectURL(file))
     }
 
-    // ✅ BARU: fungsi untuk menambah tag
     function handleAddTag() {
         const trimmed = tagInput.trim().toLowerCase()
         if (!trimmed) return
@@ -117,19 +112,16 @@ function BlogWriteContent() {
         setTagInput("")
     }
 
-    // ✅ BARU: tambah tag dengan tombol Enter
     function handleTagKeyDown(e: React.KeyboardEvent<HTMLInputElement>) {
         if (e.key === "Enter") {
             e.preventDefault()
             handleAddTag()
         }
-        // Hapus tag terakhir dengan Backspace jika input kosong
         if (e.key === "Backspace" && tagInput === "" && tags.length > 0) {
             setTags(prev => prev.slice(0, -1))
         }
     }
 
-    // ✅ BARU: hapus tag
     function handleRemoveTag(tagToRemove: string) {
         setTags(prev => prev.filter(t => t !== tagToRemove))
     }
@@ -147,10 +139,8 @@ function BlogWriteContent() {
             formData.append("content", content)
             if (coverFile) formData.append("coverImage", coverFile)
 
-            // ✅ BARU: kirim category dan tags ke API
             if (category) formData.append("category", category)
             if (tags.length > 0) {
-                // Kirim tags sebagai JSON string, nanti di-parse di backend
                 formData.append("tags", JSON.stringify(tags))
             }
 
@@ -177,9 +167,9 @@ function BlogWriteContent() {
         setCoverFile(null)
         setCoverPreview("")
         setError("")
-        setCategory("")      // ✅ BARU
-        setTags([])          // ✅ BARU
-        setTagInput("")      // ✅ BARU
+        setCategory("")
+        setTags([])
+        setTagInput("")
         if (titleRef.current) titleRef.current.innerText = ""
         if (editorRef.current) editorRef.current.innerHTML = ""
     }
@@ -338,10 +328,8 @@ function BlogWriteContent() {
                             </div>
                         </div>
 
-                        {/* ✅ BARU: Panel Category & Tags */}
                         <div className="we-meta-extra">
 
-                            {/* Category */}
                             <div className="we-field">
                                 <label className="we-field__label">
                                     <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
@@ -354,14 +342,13 @@ function BlogWriteContent() {
                                     value={category}
                                     onChange={e => setCategory(e.target.value)}
                                 >
-                                    <option value="">-- Pilih Kategori --</option>
+                                    <option value="">Pilih Kategori</option>
                                     {CATEGORY_OPTIONS.map(opt => (
                                         <option key={opt} value={opt}>{opt}</option>
                                     ))}
                                 </select>
                             </div>
 
-                            {/* Tags */}
                             <div className="we-field">
                                 <label className="we-field__label">
                                     <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
@@ -603,7 +590,6 @@ body:has(.we-root) .main {
 .we-meta__name  { font-size: 13px; font-weight: 600; color: #333; line-height: 1.2; }
 .we-meta__date  { font-size: 11.5px; color: #bbb; }
 
-/* ✅ BARU: Styles untuk panel category & tags */
 .we-meta-extra {
     display: flex;
     flex-direction: column;
@@ -716,7 +702,6 @@ body:has(.we-root) .main {
     padding: 2px 0;
 }
 .we-tags-input__field::placeholder { color: #ccc; }
-/* END BARU */
 
 .we-body {
     padding: 28px 52px 72px; outline: none;

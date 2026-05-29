@@ -76,15 +76,6 @@ const services = [
   { icon: <IconGraphic />, title: "CRUD Systems", desc: "Complete data management systems with real-time feedback and validation." },
 ]
 
-const projects = [
-  { title: "Nexora HR System", tag: "Full Stack", img: "/projects/hr-system.jpg", slug: "nexora-hr-system" },
-  { title: "Admin Dashboard", tag: "UI / UX", img: "/projects/adm-dashboard.jpg", slug: "admin-dashboard" },
-  { title: "Auth Module", tag: "Backend", img: "/projects/auth-module.jpg", slug: "auth-module" },
-  { title: "REST API Design", tag: "Backend", img: "/projects/rest-api.jpg", slug: "rest-api-design" },
-  { title: "Employee Portal", tag: "Full Stack", img: "/projects/employee-portal.jpg", slug: "employee-portal" },
-  { title: "Role-Based CMS", tag: "Full Stack", img: "/projects/role.jpg", slug: "role-based-cms" },
-]
-
 type GalleryItem = {
   id: number
   title: string
@@ -100,6 +91,8 @@ type LandingBlog = {
   coverImage?: string | null
   authorName: string
   createdAt: string
+  category?: string | null   // tambah ini
+  tags?: string[] | null
 }
 
 function stripHtml(html: string) {
@@ -130,25 +123,49 @@ function ServiceCard({ icon, title, desc, delay }: { icon: React.ReactNode; titl
 }
 
 function LandingBlogCard({ blog, index }: { blog: LandingBlog; index: number }) {
-  const excerpt = stripHtml(blog.content).slice(0, 120) + "…"
-
+  const excerpt = stripHtml(blog.content).slice(0, 110) + "…"
   return (
     <Link href={`/blog/${blog.slug}`} className="lp-blog-card" style={{ animationDelay: `${index * 100}ms` }}>
       <div className="lp-blog-card__img">
         {blog.coverImage
           ? <img src={blog.coverImage.replace('/uploads', '/api-uploads')} alt={blog.title} />
-          : <div className="lp-blog-card__img-placeholder"></div>
+          : <div className="lp-blog-card__img-placeholder">
+
+            <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.2" strokeLinecap="round" strokeLinejoin="round">
+              <rect x="3" y="3" width="18" height="18" rx="2" /><circle cx="8.5" cy="8.5" r="1.5" /><polyline points="21 15 16 10 5 21" />
+            </svg>
+          </div>
         }
+        {blog.category && (
+          <span className="lp-blog-card__category">{blog.category}</span>
+        )}
+
       </div>
       <div className="lp-blog-card__body">
         <h4 className="lp-blog-card__title">{blog.title}</h4>
         <p className="lp-blog-card__excerpt">{excerpt}</p>
-        <div className="lp-blog-card__meta">
-          <span className="lp-blog-card__avatar">{getInitials(blog.authorName)}</span>
-          <span className="lp-blog-card__author">{blog.authorName}</span>
-          <span className="lp-blog-card__date">{formatDate(blog.createdAt)}</span>
+        {blog.tags && blog.tags.length > 0 && (
+          <div className="lp-blog-card__tags">
+            {blog.tags.slice(0, 3).map(tag => (
+              <span key={tag} className="lp-blog-card__tag">#{tag}</span>
+            ))}
+          </div>
+        )}
+        <div className="lp-blog-card__footer">
+          <div className="lp-blog-card__meta">
+            <span className="lp-blog-card__avatar">{getInitials(blog.authorName)}</span>
+            <div className="lp-blog-card__meta-info">
+              <span className="lp-blog-card__author">{blog.authorName}</span>
+              <span className="lp-blog-card__date">{formatDate(blog.createdAt)}</span>
+            </div>
+          </div>
+          <span className="lp-blog-card__cta">
+            Baca
+            <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+              <line x1="5" y1="12" x2="19" y2="12" /><polyline points="12 5 19 12 12 19" />
+            </svg>
+          </span>
         </div>
-        <span className="lp-blog-card__cta">Baca Selengkapnya</span>
       </div>
     </Link>
   )
@@ -184,6 +201,11 @@ export default function LandingPage() {
   const [lightbox, setLightbox] = useState<GalleryItem | null>(null)
   const [galleryPage, setGalleryPage] = useState(0)
 
+  const [activeCategory, setActiveCategory] = useState("Semua")
+  const [projects, setProjects] = useState<{
+    id: number; title: string; category: string; imagePath: string | null; slug: string
+  }[]>([])
+
   const GALLERY_PER_PAGE = 4
 
   useEffect(() => {
@@ -198,6 +220,11 @@ export default function LandingPage() {
     fetch(`${API_BASE}/blogs/public?limit=3`)
       .then(res => res.json())
       .then(data => { if (Array.isArray(data.data)) setLatestBlogs(data.data) })
+      .catch(() => { })
+
+    fetch(`${API_BASE}/projects/public`)
+      .then(res => res.json())
+      .then(data => { if (Array.isArray(data.data)) setProjects(data.data) })
       .catch(() => { })
 
     return () => window.removeEventListener("scroll", onScroll)
@@ -411,7 +438,6 @@ export default function LandingPage() {
           <div className="lp-section__header">
             <p className="lp-section__eyebrow">Blog</p>
             <h2 className="lp-section__title">Artikel Terbaru</h2>
-            <p className="lp-section__sub">Insight, cerita, dan update terbaru dari tim kami.</p>
             <div className="lp-section__divider" />
           </div>
           {latestBlogs.length === 0 ? (
@@ -432,12 +458,64 @@ export default function LandingPage() {
           <div className="lp-section__header">
             <p className="lp-section__eyebrow lp-section__eyebrow--projects">Portfolios</p>
             <h2 className="lp-section__title lp-section__title--projects">Project Gallery</h2>
-            <p className="lp-section__sub lp-section__sub--projects">A collection of modules and features built within this system.</p>
+            <p className="lp-section__sub lp-section__sub--projects">
+              A collection of modules and features built within this system.
+            </p>
             <div className="lp-section__divider lp-section__divider--projects" />
           </div>
-          <div className="lp-projects-grid">
-            {projects.map((p, i) => <ProjectCard key={i} {...p} index={i} />)}
-          </div>
+
+          {projects.length === 0 ? (
+            <p style={{ textAlign: "center", color: "var(--text-muted)", fontSize: 14 }}>
+              Belum ada project.
+            </p>
+          ) : (() => {
+            const categories = ["Semua", ...Array.from(new Set(projects.map(p => p.category)))]
+            const filtered = activeCategory === "Semua"
+              ? projects
+              : projects.filter(p => p.category === activeCategory)
+
+            return (
+              <>
+                <div style={{ display: "flex", justifyContent: "center", gap: 8, flexWrap: "wrap", marginBottom: 36 }}>
+                  {categories.map(cat => (
+                    <button
+                      key={cat}
+                      onClick={() => setActiveCategory(cat)}
+                      style={{
+                        padding: "7px 18px",
+                        borderRadius: 999,
+                        border: "1.5px solid",
+                        borderColor: activeCategory === cat ? "var(--navy)" : "rgba(36,34,27,0.15)",
+                        background: activeCategory === cat ? "var(--navy)" : "transparent",
+                        color: activeCategory === cat ? "var(--earth)" : "var(--text-muted)",
+                        fontSize: 12,
+                        fontWeight: 700,
+                        cursor: "pointer",
+                        transition: "all 0.2s",
+                        letterSpacing: "0.03em",
+                        fontFamily: "inherit",
+                      }}
+                    >
+                      {cat}
+                    </button>
+                  ))}
+                </div>
+
+                <div className="lp-projects-grid">
+                  {filtered.map((p, i) => (
+                    <ProjectCard
+                      key={p.id}
+                      title={p.title}
+                      tag={p.category}
+                      img={p.imagePath ? `${API_BASE}${p.imagePath}` : ""}
+                      index={i}
+                      slug={p.slug}
+                    />
+                  ))}
+                </div>
+              </>
+            )
+          })()}
         </section>
 
         <section className="lp-section" id="hire">
@@ -687,21 +765,26 @@ const landingStyles = `
   @keyframes lp-fadein { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: translateY(0); } }
   .lp-section--blog { background: var(--white); }
   .lp-blog-grid { max-width: 1100px; margin: 0 auto; display: grid; grid-template-columns: repeat(3, 1fr); gap: 20px; }
-  .lp-blog-card { border-radius: 18px; overflow: hidden; background: var(--white); border: 1.5px solid rgba(0,47,69,0.07); box-shadow: var(--shadow-card); transition: transform 0.25s ease, box-shadow 0.25s ease; animation: lp-fadein 0.7s ease both; text-decoration: none; color: inherit; display: flex; flex-direction: column; }
-  .lp-blog-card:hover { transform: translateY(-5px); box-shadow: var(--shadow-hover); }
-  .lp-blog-card__img { height: 180px; overflow: hidden; background: var(--ash-light); flex-shrink: 0; display: flex; align-items: center; justify-content: center; }
-  .lp-blog-card__img img { width: 100%; height: 100%; object-fit: cover; transition: transform 0.4s ease; }
-  .lp-blog-card:hover .lp-blog-card__img img { transform: scale(1.06); }
-  .lp-blog-card__img-placeholder { font-size: 36px; }
-  .lp-blog-card__body { padding: 18px 18px 20px; display: flex; flex-direction: column; flex: 1; }
-  .lp-blog-card__title { font-size: 15px; font-weight: 700; color: var(--navy); margin: 0 0 8px; line-height: 1.35; letter-spacing: -0.02em; }
-  .lp-blog-card__excerpt { font-size: 13px; color: var(--text-muted); line-height: 1.7; margin: 0 0 14px; flex: 1; }
-  .lp-blog-card__meta { display: flex; align-items: center; gap: 7px; font-size: 11px; color: var(--text-muted); margin-bottom: 12px; }
-  .lp-blog-card__avatar { width: 20px; height: 20px; border-radius: 50%; background: var(--earth); color: var(--navy); font-size: 8px; font-weight: 800; display: flex; align-items: center; justify-content: center; flex-shrink: 0; }
-  .lp-blog-card__author { font-weight: 600; color: var(--navy); }
-  .lp-blog-card__date::before { content: "·"; margin-right: 7px; }
-  .lp-blog-card__cta { font-size: 12px; font-weight: 700; color: var(--earth-dark); margin-top: auto; }
-  .lp-blog-card:hover .lp-blog-card__cta { letter-spacing: 0.02em; }
+  .lp-blog-card { border-radius: 16px; overflow: hidden; background: #fff; border: 1.5px solid #eae7e1; box-shadow: 0 2px 10px rgba(0,0,0,0.05); transition: transform 0.2s ease, box-shadow 0.2s ease, border-color 0.2s ease; animation: lp-fadein 0.7s ease both; text-decoration: none; color: inherit; display: flex; flex-direction: column; }
+  .lp-blog-card:hover { transform: translateY(-3px); box-shadow: 0 8px 28px rgba(0,0,0,0.08); border-color: #ddd9d2; }
+  .lp-blog-card__img { position: relative; height: 175px; overflow: hidden; background: #f2efe9; flex-shrink: 0; display: flex; align-items: center; justify-content: center; color: #ccc8c0; }
+  .lp-blog-card__category { position: absolute; top: 10px; left: 10px; background: rgba(30,28,22,0.7); color: #edc84a; font-size: 9.5px; font-weight: 700; padding: 3px 9px; border-radius: 100px; letter-spacing: 0.05em; text-transform: uppercase; backdrop-filter: blur(6px); }
+  .lp-blog-card__tags { display: flex; flex-wrap: wrap; gap: 4px; margin-bottom: 11px; }
+  .lp-blog-card__tag { font-size: 10px; font-weight: 600; color: #b8880e; background: #fdf3dc; border: 1px solid #f0d88a; padding: 2px 7px; border-radius: 100px; }
+  .lp-blog-card__img img { width: 100%; height: 100%; object-fit: cover; transition: transform 0.35s ease; }
+  .lp-blog-card:hover .lp-blog-card__img img { transform: scale(1.04); }
+  .lp-blog-card__img-placeholder { color: #ccc8c0; }
+  .lp-blog-card__body { padding: 14px 15px 13px; display: flex; flex-direction: column; flex: 1; }
+  .lp-blog-card__title { font-size: 14px; font-weight: 700; color: #1a1a1a; margin: 0 0 6px; line-height: 1.38; letter-spacing: -0.02em; }
+  .lp-blog-card__excerpt { font-size: 12px; color: #777; line-height: 1.7; margin: 0 0 12px; flex: 1; }
+  .lp-blog-card__footer { display: flex; align-items: center; justify-content: space-between; margin-top: auto; }
+  .lp-blog-card__meta { display: flex; align-items: center; gap: 7px; }
+  .lp-blog-card__avatar { width: 20px; height: 20px; border-radius: 50%; background: #edc84a; color: #1e1c16; font-size: 7px; font-weight: 700; display: flex; align-items: center; justify-content: center; flex-shrink: 0; }
+  .lp-blog-card__meta-info { display: flex; flex-direction: column; gap: 1px; }
+  .lp-blog-card__author { font-size: 10.5px; font-weight: 600; color: #555; line-height: 1.2; }
+  .lp-blog-card__date { font-size: 10.5px; color: #aaa; }
+  .lp-blog-card__cta { display: inline-flex; align-items: center; gap: 4px; font-size: 11px; font-weight: 700; color: #b8880e; transition: gap 0.15s; }
+  .lp-blog-card:hover .lp-blog-card__cta { gap: 7px; }
   @media (max-width: 900px) {
     .lp-gallery-grid-4 { grid-template-columns: repeat(2, 1fr) !important; }
     .lp-projects-grid { grid-template-columns: repeat(2, 1fr); }

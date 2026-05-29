@@ -11,13 +11,13 @@ type Blog = {
     coverImage?: string | null
     authorName: string
     authorId: number
+    category?: string | null
+    tags?: string[] | null
     createdAt: string
     updatedAt: string
 }
 
 const BASE = process.env.NEXT_PUBLIC_API_URL || "http://localhost:3333"
-
-
 
 function formatDate(iso: string) {
     return new Date(iso).toLocaleDateString("id-ID", {
@@ -67,7 +67,6 @@ export default function BlogDetailPage() {
 
     const backUrl = isLoggedIn ? "/blog" : "/articles"
     const backLabel = isLoggedIn ? "Kembali ke Blog" : "Kembali ke Artikel"
-
     const coverSrc = blog?.coverImage?.replace('/uploads', '/api-uploads') ?? ''
 
     return (
@@ -97,10 +96,27 @@ export default function BlogDetailPage() {
                         </div>
                     ) : (
                         <div className="bd-container">
-                            {blog.coverImage && (
+                            {blog.coverImage ? (
                                 <div className="bd-layout">
                                     <div className="bd-cover-side">
                                         <img src={coverSrc} alt={blog.title} />
+
+                                        {blog.category && (
+                                            <div className="bd-sidebar-section">
+                                                <span className="bd-sidebar-label">Kategori</span>
+                                                <span className="bd-category">{blog.category}</span>
+                                            </div>
+                                        )}
+                                        {blog.tags && blog.tags.length > 0 && (
+                                            <div className="bd-sidebar-section">
+                                                <span className="bd-sidebar-label">Tags</span>
+                                                <div className="bd-tags">
+                                                    {blog.tags.map(tag => (
+                                                        <span key={tag} className="bd-tag">#{tag}</span>
+                                                    ))}
+                                                </div>
+                                            </div>
+                                        )}
                                     </div>
                                     <div className="bd-text-side">
                                         <h1 className="bd-title">{blog.title}</h1>
@@ -114,9 +130,7 @@ export default function BlogDetailPage() {
                                         <div className="bd-body" dangerouslySetInnerHTML={{ __html: blog.content }} />
                                     </div>
                                 </div>
-                            )}
-
-                            {!blog.coverImage && (
+                            ) : (
                                 <div>
                                     <h1 className="bd-title">{blog.title}</h1>
                                     <div className="bd-meta">
@@ -126,6 +140,18 @@ export default function BlogDetailPage() {
                                             <p className="bd-date">{formatDate(blog.createdAt)}</p>
                                         </div>
                                     </div>
+
+                                    {(blog.category || (blog.tags && blog.tags.length > 0)) && (
+                                        <div className="bd-meta-inline">
+                                            {blog.category && (
+                                                <span className="bd-category">{blog.category}</span>
+                                            )}
+                                            {blog.tags && blog.tags.map(tag => (
+                                                <span key={tag} className="bd-tag">#{tag}</span>
+                                            ))}
+                                        </div>
+                                    )}
+
                                     <div className="bd-body" dangerouslySetInnerHTML={{ __html: blog.content }} />
                                 </div>
                             )}
@@ -136,7 +162,6 @@ export default function BlogDetailPage() {
                 <footer className="bd-footer">
                     <p>© {new Date().getFullYear()} Nexora Management System.</p>
                 </footer>
-
             </div>
         </>
     )
@@ -176,15 +201,9 @@ const detailStyles = `
   }
   .bd-nav__dot { color: #f2d04e; }
 
-  .bd-content-wrap {
-    flex: 1;
-    padding: 76px 40px 80px;
-  }
+  .bd-content-wrap { flex: 1; padding: 76px 40px 80px; }
 
-  .bd-container {
-    max-width: 1000px;
-    margin: 0 auto;
-  }
+  .bd-container { max-width: 1000px; margin: 0 auto; }
 
   .bd-layout {
     display: grid;
@@ -193,15 +212,48 @@ const detailStyles = `
     align-items: start;
   }
 
-  .bd-cover-side {
-    position: sticky;
-    top: 76px;
+  .bd-cover-side { position: sticky; top: 76px; }
+  .bd-cover-side img { width: 100%; height: auto; display: block; border-radius: 12px; }
+
+  .bd-sidebar-section {
+    margin-top: 16px;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
   }
-  .bd-cover-side img {
-    width: 100%;
-    height: auto;
-    display: block;
-    border-radius: 12px;
+  .bd-sidebar-label {
+    font-size: 10.5px;
+    font-weight: 700;
+    color: #aaa;
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+  }
+  .bd-category {
+    display: inline-flex;
+    align-items: center;
+    padding: 4px 12px;
+    background: #24221b;
+    color: #f2d04e;
+    font-size: 11.5px;
+    font-weight: 700;
+    border-radius: 20px;
+    letter-spacing: 0.03em;
+    width: fit-content;
+  }
+  .bd-tags { display: flex; flex-wrap: wrap; gap: 6px; }
+  .bd-tag {
+    display: inline-flex; align-items: center;
+    padding: 3px 10px;
+    background: #fff8ec;
+    border: 1px solid #f5d89a;
+    color: #c8960a;
+    font-size: 11.5px; font-weight: 600;
+    border-radius: 20px;
+  }
+
+  .bd-meta-inline {
+    display: flex; flex-wrap: wrap; gap: 6px;
+    margin-bottom: 24px;
   }
 
   .bd-title {
@@ -238,16 +290,12 @@ const detailStyles = `
   .bd-loading { text-align: center; padding: 80px 32px; color: #888; font-size: 15px; }
   .bd-notfound { text-align: center; padding: 80px 32px; display: flex; flex-direction: column; align-items: center; gap: 12px; }
   .bd-notfound p { color: #888; font-size: 15px; margin: 0; }
-  .bd-notfound p:first-child { font-size: 48px; }
   .bd-notfound__btn { background: #f2d04e; color: #24221b; padding: 10px 24px; border-radius: 100px; text-decoration: none; font-weight: 700; font-size: 14px; margin-top: 8px; }
 
   .bd-footer {
-    background: #24221b;
-    border-top: 1px solid rgba(255,255,255,0.06);
-    padding: 20px 32px;
-    text-align: center;
-    font-size: 13px;
-    color: rgba(255,255,255,0.28);
+    background: #24221b; border-top: 1px solid rgba(255,255,255,0.06);
+    padding: 20px 32px; text-align: center;
+    font-size: 13px; color: rgba(255,255,255,0.28);
     font-family: "DM Sans", sans-serif;
   }
 

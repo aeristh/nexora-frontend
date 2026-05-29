@@ -61,6 +61,15 @@ const BlogIcon = () => (
   </svg>
 )
 
+const ProjectsIcon = () => (
+  <svg viewBox="0 0 24 24" fill="none" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+    <rect x="2" y="7" width="20" height="14" rx="2" />
+    <path d="M16 7V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v2" />
+    <line x1="12" y1="12" x2="12" y2="16" />
+    <line x1="10" y1="14" x2="14" y2="14" />
+  </svg>
+)
+
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   const pathname = usePathname()
   const [isAdmin, setIsAdmin] = useState(false)
@@ -89,7 +98,10 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
     { href: "/employees", label: "Employees", Icon: EmployeesIcon },
     { href: "/gallery", label: "Gallery", Icon: GalleryIcon },
     { href: "/blog", label: "Blog", Icon: BlogIcon },
-    ...(isAdmin ? [{ href: "/settings", label: "Users", Icon: UsersIcon }] : []),
+    ...(isAdmin ? [
+      { href: "/projects-admin", label: "Projects", Icon: ProjectsIcon },
+      { href: "/settings", label: "Users", Icon: UsersIcon },
+    ] : []),
   ]
 
   return (
