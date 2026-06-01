@@ -85,10 +85,18 @@ const ArrowRight = () => (
     </svg>
 )
 
-function ArticleCard({ blog }: { blog: Blog }) {
+function ArticleCard({ blog, isNew, cardRef }: {
+    blog: Blog
+    isNew?: boolean
+    cardRef?: React.Ref<HTMLAnchorElement>
+}) {
     const excerpt = stripHtml(blog.content).slice(0, 110) + "…"
     return (
-        <Link href={`/blog/${blog.slug}`} className="art-card">
+        <Link
+            href={`/blog/${blog.slug}`}
+            className={`art-card${isNew ? " art-card--new" : ""}`}
+            ref={cardRef}
+        >
             <div className="art-card__img">
                 {blog.coverImage
                     ? <img src={blog.coverImage.replace('/uploads', '/api-uploads')} alt={blog.title} />
@@ -164,6 +172,9 @@ export default function ArticlesPage() {
         return `${BASE}/blogs/public?${params.toString()}`
     }
 
+    const [newBlogIds, setNewBlogIds] = useState<Set<number>>(new Set())
+    const firstNewCardRef = useRef<HTMLAnchorElement | null>(null)
+
     async function fetchBlogs(pageNum: number, reset: boolean) {
         if (reset) setLoading(true)
         else setLoadingMore(true)
@@ -171,8 +182,13 @@ export default function ArticlesPage() {
             const res = await fetch(buildUrl(pageNum))
             const data = await res.json()
             const newBlogs: Blog[] = data.data || []
-            if (reset) setBlogs(newBlogs)
-            else setBlogs(prev => [...prev, ...newBlogs])
+            if (reset) {
+                setBlogs(newBlogs)
+                setNewBlogIds(new Set())
+            } else {
+                setNewBlogIds(new Set(newBlogs.map(b => b.id)))
+                setBlogs(prev => [...prev, ...newBlogs])
+            }
             setTotal(data.meta?.total || 0)
             setPage(pageNum)
             setAllTags(prev => {
@@ -190,7 +206,9 @@ export default function ArticlesPage() {
 
     async function handleShowMore() {
         await fetchBlogs(page + 1, false)
-        setTimeout(() => showMoreRef.current?.scrollIntoView({ behavior: "smooth", block: "center" }), 100)
+        setTimeout(() => {
+            firstNewCardRef.current?.scrollIntoView({ behavior: "smooth", block: "center" })
+        }, 100)
     }
 
     const searchTimeout = useRef<NodeJS.Timeout | null>(null)
@@ -276,21 +294,6 @@ export default function ArticlesPage() {
                             </div>
                         </div>
 
-                        {allTags.length > 0 && (
-                            <div className="art-filter-row">
-                                <span className="art-filter-label">Tag</span>
-                                <div className="art-chips">
-                                    {allTags.map(tag => (
-                                        <button
-                                            key={tag}
-                                            className={`art-chip art-chip--tag ${activeTag === tag ? "art-chip--tag-on" : ""}`}
-                                            onClick={() => setActiveTag(activeTag === tag ? "" : tag)}
-                                        >#{tag}</button>
-                                    ))}
-                                </div>
-                            </div>
-                        )}
-
                         {hasFilters && (
                             <div className="art-filter-row">
                                 <button className="art-clear-btn" onClick={handleClearFilters}>
@@ -322,7 +325,18 @@ export default function ArticlesPage() {
                     ) : (
                         <>
                             <div className="art-grid">
-                                {blogs.map(blog => <ArticleCard key={blog.id} blog={blog} />)}
+                                {blogs.map((blog, i) => {
+                                    const isNew = newBlogIds.has(blog.id)
+                                    const isFirstNew = isNew && i === blogs.findIndex(b => newBlogIds.has(b.id))
+                                    return (
+                                        <ArticleCard
+                                            key={blog.id}
+                                            blog={blog}
+                                            isNew={isNew}
+                                            cardRef={isFirstNew ? firstNewCardRef : undefined}
+                                        />
+                                    )
+                                })}
                                 {loadingMore && [1, 2, 3].map(i => <div key={`sk-${i}`} className="art-skeleton" />)}
                             </div>
 
@@ -593,6 +607,20 @@ const articlesStyles = `
     background-size: 200% 100%;
     animation: shimmer 1.5s infinite;
   }
+
+  @keyframes fadeSlideUp {
+    from { opacity: 0; transform: translateY(20px); }
+    to   { opacity: 1; transform: translateY(0); }
+  }
+
+  .art-card--new {
+    animation: fadeSlideUp 0.4s ease forwards;
+    opacity: 0;
+  }
+  .art-card--new:nth-child(3n+1) { animation-delay: 0ms; }
+  .art-card--new:nth-child(3n+2) { animation-delay: 60ms; }
+  .art-card--new:nth-child(3n+3) { animation-delay: 120ms; }
+
   @keyframes shimmer {
     0% { background-position: 200% 0; }
     100% { background-position: -200% 0; }

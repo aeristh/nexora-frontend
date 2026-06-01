@@ -1,6 +1,6 @@
 "use client"
 
-import { useEffect, useState } from "react"
+import { useEffect, useState, useRef, useCallback } from "react"
 import Link from "next/link"
 
 const IconGraphic = () => (
@@ -193,6 +193,102 @@ function ProjectCard({ title, tag, img, index, slug }: { title: string; tag: str
   )
 }
 
+function Pagination({ page, total, onChange }: { page: number; total: number; onChange: (p: number) => void }) {
+  if (total <= 1) return null
+
+  let start = Math.max(0, page - 1)
+  let end = start + 3
+  if (end > total) { end = total; start = Math.max(0, end - 3) }
+  const visible = Array.from({ length: end - start }, (_, i) => start + i)
+
+  const colors = [
+    { bg: "#f2d04e", color: "#24221b" },
+    { bg: "#ff8fab", color: "#fff" },
+    { bg: "#a0c4ff", color: "#1a2e4a" },
+    { bg: "#b5ead7", color: "#1a3d2e" },
+    { bg: "#ffd6a5", color: "#4a2e00" },
+    { bg: "#c77dff", color: "#fff" },
+    { bg: "#f4a261", color: "#fff" },
+    { bg: "#90e0ef", color: "#023e8a" },
+  ]
+
+  return (
+    <div style={{ display: "flex", alignItems: "center", justifyContent: "center", gap: 6, marginTop: 36 }}>
+      <style>{`
+        .pg-btn { transition: transform 0.18s cubic-bezier(.34,1.56,.64,1), box-shadow 0.18s ease, background 0.18s ease !important; }
+        .pg-btn:hover:not(:disabled) { transform: translateY(-3px) scale(1.12) !important; box-shadow: 0 6px 18px rgba(0,0,0,0.15) !important; }
+        .pg-btn:active:not(:disabled) { transform: scale(0.93) !important; }
+        .pg-num-active { animation: pg-pop 0.28s cubic-bezier(.34,1.56,.64,1) both; }
+        @keyframes pg-pop { 0% { transform: scale(0.7) rotate(-8deg); opacity: 0.4; } 100% { transform: scale(1) rotate(0deg); opacity: 1; } }
+        .pg-arrow { transition: transform 0.18s cubic-bezier(.34,1.56,.64,1), background 0.18s ease !important; }
+        .pg-arrow:hover:not(:disabled) { transform: scale(1.15) !important; }
+      `}</style>
+
+      <button
+        className="pg-btn pg-arrow"
+        onClick={() => onChange(Math.max(0, page - 1))}
+        disabled={page === 0}
+        style={{
+          width: 36, height: 36, borderRadius: 10,
+          border: "none",
+          background: page === 0 ? "rgba(36,34,27,0.06)" : "#24221b",
+          color: page === 0 ? "rgba(36,34,27,0.25)" : "#f2d04e",
+          cursor: page === 0 ? "not-allowed" : "pointer",
+          display: "flex", alignItems: "center", justifyContent: "center",
+          boxShadow: page === 0 ? "none" : "0 3px 10px rgba(36,34,27,0.18)",
+        }}
+      >
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+          <polyline points="15 18 9 12 15 6" />
+        </svg>
+      </button>
+
+      {visible.map(i => {
+        const c = colors[i % colors.length]
+        const isActive = page === i
+        return (
+          <button
+            key={i}
+            className={`pg-btn ${isActive ? "pg-num-active" : ""}`}
+            onClick={() => onChange(i)}
+            style={{
+              width: 36, height: 36, borderRadius: 10,
+              border: "none",
+              background: isActive ? c.bg : "rgba(36,34,27,0.06)",
+              color: isActive ? c.color : "rgba(36,34,27,0.4)",
+              fontSize: 13, fontWeight: 700,
+              cursor: "pointer",
+              boxShadow: isActive ? `0 4px 14px ${c.bg}99` : "none",
+              fontFamily: "inherit",
+            }}
+          >
+            {i + 1}
+          </button>
+        )
+      })}
+
+      <button
+        className="pg-btn pg-arrow"
+        onClick={() => onChange(Math.min(total - 1, page + 1))}
+        disabled={page === total - 1}
+        style={{
+          width: 36, height: 36, borderRadius: 10,
+          border: "none",
+          background: page === total - 1 ? "rgba(36,34,27,0.06)" : "#24221b",
+          color: page === total - 1 ? "rgba(36,34,27,0.25)" : "#f2d04e",
+          cursor: page === total - 1 ? "not-allowed" : "pointer",
+          display: "flex", alignItems: "center", justifyContent: "center",
+          boxShadow: page === total - 1 ? "none" : "0 3px 10px rgba(36,34,27,0.18)",
+        }}
+      >
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+          <polyline points="9 18 15 12 9 6" />
+        </svg>
+      </button>
+    </div>
+  )
+}
+
 export default function LandingPage() {
   const [scrolled, setScrolled] = useState(false)
   const [menuOpen, setMenuOpen] = useState(false)
@@ -200,13 +296,53 @@ export default function LandingPage() {
   const [latestBlogs, setLatestBlogs] = useState<LandingBlog[]>([])
   const [lightbox, setLightbox] = useState<GalleryItem | null>(null)
   const [galleryPage, setGalleryPage] = useState(0)
+  const [galleryAnimating, setGalleryAnimating] = useState(false)
 
   const [activeCategory, setActiveCategory] = useState("Semua")
+  const handleNavClick = useCallback((e: React.MouseEvent<HTMLAnchorElement>, href: string) => {
+    e.preventDefault()
+    setMenuOpen(false)
+    const id = href.replace("#", "")
+    const el = document.getElementById(id)
+    if (!el) return
+    const navHeight = 64
+    const top = el.getBoundingClientRect().top + window.scrollY - navHeight
+    window.scrollTo({ top, behavior: "smooth" })
+  }, [])
+  const [projectPage, setProjectPage] = useState(0)
   const [projects, setProjects] = useState<{
     id: number; title: string; category: string; imagePath: string | null; slug: string
   }[]>([])
 
   const GALLERY_PER_PAGE = 4
+
+  useEffect(() => {
+    const sections = document.querySelectorAll(".lp-section, .lp-band")
+    const observer = new IntersectionObserver(
+      (entries) => {
+        entries.forEach((entry) => {
+          if (entry.isIntersecting) {
+            entry.target.classList.add("lp-revealed")
+            observer.unobserve(entry.target)
+          }
+        })
+      },
+      { threshold: 0.08, rootMargin: "0px 0px -40px 0px" }
+    )
+    sections.forEach((el) => {
+      el.classList.add("lp-reveal-init")
+      observer.observe(el)
+    })
+    return () => observer.disconnect()
+  }, [])
+
+  const handleGalleryPageChange = (newPage: number) => {
+    setGalleryAnimating(true)
+    setTimeout(() => {
+      setGalleryPage(newPage)
+      setGalleryAnimating(false)
+    }, 180)
+  }
 
   useEffect(() => {
     const onScroll = () => setScrolled(window.scrollY > 40)
@@ -251,7 +387,7 @@ export default function LandingPage() {
             </div>
             <div className={`lp-nav__links ${menuOpen ? "lp-nav__links--open" : ""}`}>
               {navLinks.map(({ href, label }) => (
-                <a key={href} href={href} className="lp-nav__link" onClick={() => setMenuOpen(false)}>
+                <a key={href} href={href} className="lp-nav__link" onClick={(e) => handleNavClick(e, href)}>
                   {label}
                 </a>
               ))}
@@ -369,16 +505,21 @@ export default function LandingPage() {
             const pageItems = galleries.slice(galleryPage * GALLERY_PER_PAGE, (galleryPage + 1) * GALLERY_PER_PAGE)
             return (
               <>
-                <div style={{ display: "grid", gridTemplateColumns: "repeat(4, 1fr)", gap: 16, maxWidth: 1200, margin: "0 auto" }}>
-                  {pageItems.map((item) => (
+                <div
+                  className={galleryAnimating ? "gallery-grid-exit" : "gallery-grid-animate"}
+                  style={{ display: "grid", gridTemplateColumns: "repeat(4, 1fr)", gap: 16, maxWidth: 1200, margin: "0 auto" }}
+                >
+                  {pageItems.map((item, idx) => (
                     <div
                       key={item.id}
                       onClick={() => setLightbox(item)}
+                      className="gallery-card-anim"
                       style={{
                         borderRadius: 16, overflow: "hidden", cursor: "pointer",
                         position: "relative", boxShadow: "0 4px 20px rgba(0,0,0,0.10)",
                         transition: "transform 0.28s cubic-bezier(.22,.68,0,1.2), box-shadow 0.28s ease",
                         aspectRatio: "4/3",
+                        animationDelay: `${idx * 80}ms`,
                       }}
                       onMouseEnter={e => {
                         (e.currentTarget as HTMLDivElement).style.transform = "translateY(-6px) scale(1.01)";
@@ -411,23 +552,9 @@ export default function LandingPage() {
                   ))}
                 </div>
 
-                {totalPages > 1 && (
-                  <div style={{ display: "flex", alignItems: "center", justifyContent: "center", gap: 16, marginTop: 36 }}>
-                    <button
-                      onClick={() => setGalleryPage(p => Math.max(0, p - 1))}
-                      disabled={galleryPage === 0}
-                      style={{ padding: "10px 28px", borderRadius: 999, background: galleryPage === 0 ? "rgba(0,0,0,0.08)" : "var(--navy)", color: galleryPage === 0 ? "var(--text-muted)" : "var(--earth)", border: "none", fontSize: 14, fontWeight: 700, cursor: galleryPage === 0 ? "not-allowed" : "pointer", transition: "all 0.2s" }}
-                    >Prev</button>
-                    <span style={{ fontSize: 13, color: "var(--text-muted)", fontWeight: 600 }}>{galleryPage + 1} / {totalPages}</span>
-                    <button
-                      onClick={() => setGalleryPage(p => Math.min(totalPages - 1, p + 1))}
-                      disabled={galleryPage === totalPages - 1}
-                      style={{ padding: "10px 28px", borderRadius: 999, background: galleryPage === totalPages - 1 ? "rgba(0,0,0,0.08)" : "var(--navy)", color: galleryPage === totalPages - 1 ? "var(--text-muted)" : "var(--earth)", border: "none", fontSize: 14, fontWeight: 700, cursor: galleryPage === totalPages - 1 ? "not-allowed" : "pointer", transition: "all 0.2s" }}
-                    >Next</button>
-                  </div>
-                )}
+                <Pagination page={galleryPage} total={totalPages} onChange={handleGalleryPageChange} />
                 <p style={{ textAlign: "center", fontSize: 12, color: "var(--text-muted)", marginTop: 12 }}>
-                  Menampilkan {pageItems.length} dari {galleries.length} foto &nbsp;·&nbsp; Halaman {galleryPage + 1} dari {totalPages}
+                  Menampilkan {pageItems.length} dari {galleries.length} foto
                 </p>
               </>
             )
@@ -469,10 +596,13 @@ export default function LandingPage() {
               Belum ada project.
             </p>
           ) : (() => {
+            const PROJECT_PER_PAGE = 3
             const categories = ["Semua", ...Array.from(new Set(projects.map(p => p.category)))]
             const filtered = activeCategory === "Semua"
               ? projects
               : projects.filter(p => p.category === activeCategory)
+            const totalPages = Math.ceil(filtered.length / PROJECT_PER_PAGE)
+            const pageItems = filtered.slice(projectPage * PROJECT_PER_PAGE, (projectPage + 1) * PROJECT_PER_PAGE)
 
             return (
               <>
@@ -480,14 +610,14 @@ export default function LandingPage() {
                   {categories.map(cat => (
                     <button
                       key={cat}
-                      onClick={() => setActiveCategory(cat)}
+                      onClick={() => { setActiveCategory(cat); setProjectPage(0) }}
                       style={{
                         padding: "7px 18px",
                         borderRadius: 999,
                         border: "1.5px solid",
-                        borderColor: activeCategory === cat ? "var(--navy)" : "rgba(36,34,27,0.15)",
-                        background: activeCategory === cat ? "var(--navy)" : "transparent",
-                        color: activeCategory === cat ? "var(--earth)" : "var(--text-muted)",
+                        borderColor: activeCategory === cat ? "var(--earth)" : "rgba(36,34,27,0.15)",
+                        background: activeCategory === cat ? "var(--earth)" : "transparent",
+                        color: activeCategory === cat ? "var(--navy)" : "var(--text-muted)",
                         fontSize: 12,
                         fontWeight: 700,
                         cursor: "pointer",
@@ -502,7 +632,7 @@ export default function LandingPage() {
                 </div>
 
                 <div className="lp-projects-grid">
-                  {filtered.map((p, i) => (
+                  {pageItems.map((p, i) => (
                     <ProjectCard
                       key={p.id}
                       title={p.title}
@@ -513,6 +643,11 @@ export default function LandingPage() {
                     />
                   ))}
                 </div>
+
+                <Pagination page={projectPage} total={totalPages} onChange={setProjectPage} />
+                <p style={{ textAlign: "center", fontSize: 12, color: "var(--text-muted)", marginTop: 12 }}>
+                  Menampilkan {pageItems.length} dari {filtered.length} project
+                </p>
               </>
             )
           })()}
@@ -809,5 +944,33 @@ const landingStyles = `
     .lp-footer__inner { justify-content: center; text-align: center; }
     .lp-about__photo-frame { width: 200px; height: 240px; }
     .lp-blog-grid { grid-template-columns: 1fr; }
+  }
+
+    @keyframes gallery-fadein {
+    from { opacity: 0; transform: translateY(16px) scale(0.97); }
+    to   { opacity: 1; transform: translateY(0) scale(1); }
+  }
+    .gallery-grid-animate {
+    animation: gallery-fadein 0.32s cubic-bezier(.34,1.56,.64,1) both;
+  }
+    .gallery-grid-exit {
+    opacity: 0;
+    transform: translateY(-10px) scale(0.97);
+    transition: opacity 0.18s ease, transform 0.18s ease;
+  }
+
+    .gallery-card-anim {
+    animation: lp-fadein 0.5s cubic-bezier(.34,1.2,.64,1) both;
+  }
+
+  html { scroll-behavior: smooth; }
+
+  @keyframes section-flash {
+    0%   { box-shadow: inset 0 0 0 0px rgba(242,208,78,0); }
+    30%  { box-shadow: inset 0 0 0 3px rgba(242,208,78,0.55); }
+    100% { box-shadow: inset 0 0 0 0px rgba(242,208,78,0); }
+  }
+  .lp-section--flash {
+    animation: section-flash 0.9s cubic-bezier(.22,.68,0,1.2) both;
   }
 `
