@@ -91,7 +91,8 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
     pathname === "/register" ||
     pathname.startsWith("/projects/") ||
     pathname === "/articles" ||
-    pathname.startsWith("/blog/")
+    pathname.startsWith("/blog/") ||
+    pathname === "/projects-admin/write"
 
   const navItems = [
     { href: "/dashboard", label: "Home", Icon: HomeIcon },

@@ -264,7 +264,7 @@ export default function EmployeesPage() {
                                         textAlign: "center", padding: "40px 20px",
                                         color: "#9ca3af", fontSize: 14,
                                     }}>
-                                        <div style={{ fontSize: 32, marginBottom: 8 }}>🔍</div>
+                                        <div style={{ fontSize: 32, marginBottom: 8 }}></div>
                                         Tidak ada data yang ditemukan.
                                     </td>
                                 </tr>

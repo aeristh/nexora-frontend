@@ -43,14 +43,6 @@ export default function ProjectsAdminPage() {
     const [loading, setLoading] = useState(true)
     const [search, setSearch] = useState("")
     const [toast, setToast] = useState("")
-    const [modalOpen, setModalOpen] = useState(false)
-    const [isEditing, setIsEditing] = useState(false)
-    const [selected, setSelected] = useState<Project | null>(null)
-    const [formData, setFormData] = useState({ title: "", category: "", description: "", content: "" })
-    const [imageFile, setImageFile] = useState<File | null>(null)
-    const [submitting, setSubmitting] = useState(false)
-    const [error, setError] = useState("")
-    const [errors, setErrors] = useState<{ title?: string; category?: string }>({})
 
     const [confirm, setConfirm] = useState<{
         open: boolean; title: string; message: string
@@ -92,64 +84,6 @@ export default function ProjectsAdminPage() {
         if (parsed.role !== "admin") { router.push("/dashboard"); return }
         fetchProjects()
     }, [])
-
-    const openAdd = () => {
-        setIsEditing(false)
-        setSelected(null)
-        setFormData({ title: "", category: "", description: "", content: "" })
-        setImageFile(null)
-        setError("")
-        setErrors({})
-        setModalOpen(true)
-    }
-
-    const openEdit = (p: Project) => {
-        setIsEditing(true)
-        setSelected(p)
-        setFormData({
-            title: p.title,
-            category: p.category,
-            description: p.description || "",
-            content: p.content || "",
-        })
-        setImageFile(null)
-        setError("")
-        setErrors({})
-        setModalOpen(true)
-    }
-
-    const handleSubmit = async () => {
-        const newErrors: { title?: string; category?: string } = {}
-        if (!formData.title.trim()) newErrors.title = "Title wajib diisi"
-        if (!formData.category.trim()) newErrors.category = "Kategori wajib diisi"
-        if (Object.keys(newErrors).length > 0) { setErrors(newErrors); return }
-        setErrors({})
-        setSubmitting(true)
-        setError("")
-
-        const body = new FormData()
-        body.append("title", formData.title)
-        body.append("category", formData.category)
-        body.append("description", formData.description)
-        body.append("content", formData.content)
-        if (imageFile) body.append("image", imageFile)
-
-        try {
-            const url = isEditing ? `${API_BASE}/projects/${selected!.id}` : `${API_BASE}/projects`
-            const method = isEditing ? "PUT" : "POST"
-            const res = await fetch(url, { method, headers: getHeaders(), body })
-            if (!res.ok) {
-                const errData = await res.json().catch(() => ({}))
-                throw new Error(errData?.message || `Error ${res.status}`)
-            }
-            setModalOpen(false)
-            showToast(isEditing ? "Project berhasil diupdate" : "Project berhasil ditambah")
-            fetchProjects()
-        } catch (e: any) {
-            setError(e.message || "Terjadi kesalahan")
-        }
-        setSubmitting(false)
-    }
 
     const handleDelete = (p: Project) => {
         setConfirm({
@@ -216,9 +150,9 @@ export default function ProjectsAdminPage() {
             </div>
 
             <div style={{ display: "flex", gap: 10, marginBottom: 16, alignItems: "center", flexWrap: "wrap" }}>
-                <button className="add-btn" onClick={openAdd}>+ Tambah Project</button>
+                <button className="add-btn" onClick={() => router.push("/projects-admin/write")}>+ Tambah Project</button>
                 <input
-                    placeholder="Cari title, kategori, atau slug..."
+                    placeholder="Cari title, atau kategori..."
                     value={search}
                     onChange={e => setSearch(e.target.value)}
                     style={{ flex: 1, minWidth: 200, margin: 0 }}
@@ -233,15 +167,14 @@ export default function ProjectsAdminPage() {
                                 <th style={thStyle}>Gambar</th>
                                 <th style={thStyle}>Title</th>
                                 <th style={thStyle}>Kategori</th>
-                                <th style={thStyle}>Slug</th>
                                 <th style={thStyle}>Aksi</th>
                             </tr>
                         </thead>
                         <tbody>
                             {filtered.length === 0 ? (
                                 <tr>
-                                    <td colSpan={5} style={{ textAlign: "center", padding: "40px 20px", color: "#9ca3af", fontSize: 14 }}>
-                                        <div style={{ fontSize: 32, marginBottom: 8 }}>🔍</div>
+                                    <td colSpan={4} style={{ textAlign: "center", padding: "40px 20px", color: "#9ca3af", fontSize: 14 }}>
+                                        <div style={{ fontSize: 32, marginBottom: 8 }}></div>
                                         Tidak ada data yang ditemukan.
                                     </td>
                                 </tr>
@@ -273,12 +206,9 @@ export default function ProjectsAdminPage() {
                                             {p.category}
                                         </span>
                                     </td>
-                                    <td style={{ ...tdStyle, fontFamily: "monospace", fontSize: 12, color: "#9ca3af" }}>
-                                        {p.slug}
-                                    </td>
                                     <td style={tdStyle}>
                                         <div style={{ display: "flex", gap: 6, justifyContent: "center" }}>
-                                            <button onClick={() => openEdit(p)} title="Edit" style={{
+                                            <button onClick={() => router.push(`/projects-admin/write?id=${p.id}`)} title="Edit" style={{
                                                 display: "flex", alignItems: "center", justifyContent: "center",
                                                 width: 32, height: 32, borderRadius: 8,
                                                 border: "1px solid #e5e7eb", background: "#fff",
@@ -321,151 +251,6 @@ export default function ProjectsAdminPage() {
                 </div>
             )}
 
-            {modalOpen && (
-                <div className="modal">
-                    <div className="modal-content" style={{
-                        maxWidth: 480, width: "90%",
-                        borderRadius: 24, padding: "24px 28px 20px",
-                        background: "rgba(255,255,255,0.97)",
-                        boxShadow: "0 8px 40px rgba(0,0,0,0.12)",
-                        maxHeight: "90vh", overflowY: "auto",
-                    }}>
-                        <div style={{ marginBottom: 20 }}>
-                            <h2 style={{ fontSize: 20, fontWeight: 800, color: "#1c1917", letterSpacing: "-0.4px", margin: "0 0 3px" }}>
-                                {isEditing ? "Edit Project" : "Tambah Project"}
-                            </h2>
-                            <p style={{ fontSize: 13, color: "#78716c", margin: 0 }}>
-                                {isEditing ? "Perbarui data project di bawah ini" : "Isi data project baru di bawah ini"}
-                            </p>
-                        </div>
-
-                        {error && (
-                            <div style={{ background: "#fff0f0", border: "1px solid #f5c6c6", borderRadius: 8, padding: "10px 14px", marginBottom: 14, fontSize: 13, color: "#c0392b" }}>
-                                {error}
-                            </div>
-                        )}
-
-                        <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
-
-                            <div>
-                                <input
-                                    value={formData.title}
-                                    onChange={e => { setFormData(f => ({ ...f, title: e.target.value })); setErrors(p => ({ ...p, title: undefined })) }}
-                                    placeholder="Title Project *"
-                                    style={{
-                                        width: "100%", padding: "10px 14px",
-                                        border: `1.5px solid ${errors.title ? "#ef4444" : "#e7e5e4"}`,
-                                        borderRadius: 10, fontSize: 13.5, color: "#1c1917",
-                                        background: errors.title ? "#fff5f5" : "rgba(255,255,255,0.8)",
-                                        outline: "none", boxSizing: "border-box" as const, fontFamily: "inherit",
-                                    }}
-                                    onFocus={e => { e.currentTarget.style.borderColor = errors.title ? "#ef4444" : "#f59e0b"; e.currentTarget.style.boxShadow = "0 0 0 3px rgba(245,158,11,0.12)" }}
-                                    onBlur={e => { e.currentTarget.style.borderColor = errors.title ? "#ef4444" : "#e7e5e4"; e.currentTarget.style.boxShadow = "none" }}
-                                />
-                                {errors.title && <p style={{ color: "#ef4444", fontSize: 11.5, margin: "3px 0 0 4px" }}>{errors.title}</p>}
-                            </div>
-
-                            <div>
-                                <input
-                                    value={formData.category}
-                                    onChange={e => { setFormData(f => ({ ...f, category: e.target.value })); setErrors(p => ({ ...p, category: undefined })) }}
-                                    placeholder="Kategori * (contoh: Full Stack, UI/UX)"
-                                    style={{
-                                        width: "100%", padding: "10px 14px",
-                                        border: `1.5px solid ${errors.category ? "#ef4444" : "#e7e5e4"}`,
-                                        borderRadius: 10, fontSize: 13.5, color: "#1c1917",
-                                        background: errors.category ? "#fff5f5" : "rgba(255,255,255,0.8)",
-                                        outline: "none", boxSizing: "border-box" as const, fontFamily: "inherit",
-                                    }}
-                                    onFocus={e => { e.currentTarget.style.borderColor = errors.category ? "#ef4444" : "#f59e0b"; e.currentTarget.style.boxShadow = "0 0 0 3px rgba(245,158,11,0.12)" }}
-                                    onBlur={e => { e.currentTarget.style.borderColor = errors.category ? "#ef4444" : "#e7e5e4"; e.currentTarget.style.boxShadow = "none" }}
-                                />
-                                {errors.category && <p style={{ color: "#ef4444", fontSize: 11.5, margin: "3px 0 0 4px" }}>{errors.category}</p>}
-                            </div>
-
-                            <input
-                                value={formData.description}
-                                onChange={e => setFormData(f => ({ ...f, description: e.target.value }))}
-                                placeholder="Deskripsi singkat"
-                                style={{
-                                    width: "100%", padding: "10px 14px",
-                                    border: "1.5px solid #e7e5e4", borderRadius: 10, fontSize: 13.5,
-                                    color: "#1c1917", background: "rgba(255,255,255,0.8)",
-                                    outline: "none", boxSizing: "border-box" as const, fontFamily: "inherit",
-                                }}
-                                onFocus={e => { e.currentTarget.style.borderColor = "#f59e0b"; e.currentTarget.style.boxShadow = "0 0 0 3px rgba(245,158,11,0.12)" }}
-                                onBlur={e => { e.currentTarget.style.borderColor = "#e7e5e4"; e.currentTarget.style.boxShadow = "none" }}
-                            />
-
-                            <textarea
-                                value={formData.content}
-                                onChange={e => setFormData(f => ({ ...f, content: e.target.value }))}
-                                placeholder="Konten / detail project..."
-                                rows={4}
-                                style={{
-                                    width: "100%", padding: "10px 14px",
-                                    border: "1.5px solid #e7e5e4", borderRadius: 10, fontSize: 13.5,
-                                    color: "#1c1917", background: "rgba(255,255,255,0.8)",
-                                    outline: "none", boxSizing: "border-box" as const, fontFamily: "inherit",
-                                    resize: "vertical", minHeight: 100,
-                                }}
-                                onFocus={e => { e.currentTarget.style.borderColor = "#f59e0b"; e.currentTarget.style.boxShadow = "0 0 0 3px rgba(245,158,11,0.12)" }}
-                                onBlur={e => { e.currentTarget.style.borderColor = "#e7e5e4"; e.currentTarget.style.boxShadow = "none" }}
-                            />
-
-                            <div style={{ padding: "10px 14px", border: "1.5px solid #e7e5e4", borderRadius: 10, background: "rgba(255,255,255,0.8)" }}>
-                                <p style={{ fontSize: 11.5, fontWeight: 700, color: "#9ca3af", textTransform: "uppercase" as const, letterSpacing: "0.06em", margin: "0 0 8px" }}>
-                                    Gambar {isEditing ? "(kosongkan jika tidak diganti)" : ""}
-                                </p>
-                                <input
-                                    type="file"
-                                    accept="image/*"
-                                    onChange={e => setImageFile(e.target.files?.[0] || null)}
-                                    style={{ fontSize: 13, color: "#555", width: "100%" }}
-                                />
-                                {isEditing && selected?.imagePath && !imageFile && (
-                                    <img src={`${API_BASE}${selected.imagePath}`} alt="current"
-                                        style={{ marginTop: 8, height: 56, borderRadius: 8, border: "1px solid #e7e5e4" }} />
-                                )}
-                            </div>
-                        </div>
-
-                        <div style={{ marginTop: 20, display: "flex", flexDirection: "column", gap: 8 }}>
-                            <button
-                                onClick={handleSubmit}
-                                disabled={submitting}
-                                style={{
-                                    width: "100%", padding: "10px 0",
-                                    background: "#f59e0b", color: "#fff",
-                                    border: "none", borderRadius: 10,
-                                    fontSize: 14, fontWeight: 700, cursor: submitting ? "not-allowed" : "pointer",
-                                    opacity: submitting ? 0.7 : 1,
-                                    boxShadow: "0 4px 14px rgba(245,158,11,0.3)",
-                                    fontFamily: "inherit", transition: "background 0.2s",
-                                }}
-                                onMouseEnter={e => { if (!submitting) (e.currentTarget as HTMLButtonElement).style.background = "#d97706" }}
-                                onMouseLeave={e => { (e.currentTarget as HTMLButtonElement).style.background = "#f59e0b" }}
-                            >
-                                {submitting ? "Menyimpan..." : isEditing ? "Update Project" : "Tambah Project"}
-                            </button>
-                            <button
-                                onClick={() => setModalOpen(false)}
-                                style={{
-                                    width: "100%", padding: "10px 0",
-                                    background: "transparent", color: "#78716c",
-                                    border: "1.5px solid #e7e5e4", borderRadius: 10,
-                                    fontSize: 13.5, fontWeight: 600, cursor: "pointer",
-                                    fontFamily: "inherit", transition: "all 0.2s",
-                                }}
-                                onMouseEnter={e => { (e.currentTarget as HTMLButtonElement).style.background = "#f5f5f4" }}
-                                onMouseLeave={e => { (e.currentTarget as HTMLButtonElement).style.background = "transparent" }}
-                            >
-                                Tutup
-                            </button>
-                        </div>
-                    </div>
-                </div>
-            )}
         </div>
     )
 }

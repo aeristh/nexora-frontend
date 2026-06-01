@@ -49,6 +49,11 @@ function BlogWriteContent() {
     const editId = searchParams.get("id")
     const [isEditMode, setIsEditMode] = useState(false)
 
+    const [showLinkInput, setShowLinkInput] = useState(false)
+    const [linkUrl, setLinkUrl] = useState("")
+
+    const [savedSelection, setSavedSelection] = useState<Range | null>(null)
+
     useEffect(() => {
         const raw = localStorage.getItem("user")
         if (raw) {
@@ -88,6 +93,19 @@ function BlogWriteContent() {
     function execCmd(cmd: string, value?: string) {
         document.execCommand(cmd, false, value)
         editorRef.current?.focus()
+    }
+
+    function insertLink(url: string) {
+        if (!url) return
+        const sel = window.getSelection()
+        if (savedSelection) {
+            sel?.removeAllRanges()
+            sel?.addRange(savedSelection)
+        }
+        document.execCommand("createLink", false, url)
+        setLinkUrl("")
+        setShowLinkInput(false)
+        setSavedSelection(null)
     }
 
     function handleCover(e: React.ChangeEvent<HTMLInputElement>) {
@@ -246,11 +264,63 @@ function BlogWriteContent() {
                     <div className="we-toolbar__sep" />
                     <div className="we-toolbar__group">
                         <button className="we-tool" onMouseDown={e => { e.preventDefault(); execCmd("formatBlock", "blockquote") }}>❝ Kutip</button>
-                        <button className="we-tool" onMouseDown={e => {
-                            e.preventDefault()
-                            const url = prompt("Masukkan URL:")
-                            if (url) execCmd("createLink", url)
-                        }}>🔗 Link</button>
+                        <div style={{ position: "relative", display: "inline-block" }}>
+                            <button
+                                className="we-tool"
+                                onMouseDown={e => {
+                                    e.preventDefault()
+                                    const sel = window.getSelection()
+                                    if (sel && sel.rangeCount > 0) {
+                                        setSavedSelection(sel.getRangeAt(0).cloneRange())
+                                    }
+                                    setShowLinkInput(v => !v)
+                                }}
+                            >🔗 Link</button>
+
+                            {showLinkInput && (
+                                <div style={{
+                                    position: "absolute", top: "110%", left: 0, zIndex: 100,
+                                    background: "#fff", border: "1.5px solid #e7e5e4",
+                                    borderRadius: 10, padding: "10px 12px",
+                                    boxShadow: "0 4px 20px rgba(0,0,0,0.12)",
+                                    display: "flex", gap: 6, alignItems: "center",
+                                    minWidth: 280,
+                                }}>
+                                    <input
+                                        autoFocus
+                                        placeholder="https://..."
+                                        value={linkUrl}
+                                        onChange={e => setLinkUrl(e.target.value)}
+                                        onKeyDown={e => {
+                                            if (e.key === "Enter") {
+                                                e.preventDefault()
+                                                insertLink(linkUrl)
+                                            }
+                                            if (e.key === "Escape") {
+                                                setShowLinkInput(false)
+                                                setLinkUrl("")
+                                            }
+                                        }}
+                                        style={{
+                                            flex: 1, padding: "7px 10px",
+                                            border: "1.5px solid #e7e5e4", borderRadius: 7,
+                                            fontSize: 13, outline: "none", fontFamily: "inherit",
+                                        }}
+                                    />
+                                    <button
+                                        onMouseDown={e => {
+                                            e.preventDefault()
+                                            insertLink(linkUrl)
+                                        }}
+                                        style={{
+                                            padding: "7px 14px", background: "#f59e0b", color: "#24221b",
+                                            border: "none", borderRadius: 7, fontSize: 13,
+                                            fontWeight: 700, cursor: "pointer", fontFamily: "inherit",
+                                        }}
+                                    >Sisipkan</button>
+                                </div>
+                            )}
+                        </div>
                         <button className="we-tool" onMouseDown={e => { e.preventDefault(); execCmd("removeFormat") }}>✗ Format</button>
                     </div>
                 </div>
