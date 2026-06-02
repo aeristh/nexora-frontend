@@ -314,9 +314,23 @@ export default function LandingPage() {
     id: number; title: string; category: string; imagePath: string | null; slug: string
   }[]>([])
 
+  const [currentUser, setCurrentUser] = useState<{
+    fullName: string
+    email: string
+    role: string
+  } | null>(null)
+
+  const [profileOpen, setProfileOpen] = useState(false)
+
   const GALLERY_PER_PAGE = 4
 
   useEffect(() => {
+    const userData = localStorage.getItem("user")
+    if (userData) {
+      try {
+        setCurrentUser(JSON.parse(userData))
+      } catch { }
+    }
     const sections = document.querySelectorAll(".lp-section, .lp-band")
     const observer = new IntersectionObserver(
       (entries) => {
@@ -334,6 +348,7 @@ export default function LandingPage() {
       observer.observe(el)
     })
     return () => observer.disconnect()
+
   }, [])
 
   const handleGalleryPageChange = (newPage: number) => {
@@ -393,8 +408,122 @@ export default function LandingPage() {
               ))}
             </div>
             <div className="lp-nav__actions">
-              <Link href="/login" className="lp-btn lp-btn--footer-outline lp-btn--sm">Login</Link>
-              <Link href="/register" className="lp-btn lp-btn--primary lp-btn--sm">Register</Link>
+              {currentUser ? (
+                <>
+                  <div style={{ position: "relative" }}>
+
+                    <button
+                      onClick={() => setProfileOpen(!profileOpen)}
+                      style={{
+                        width: 36, height: 36, borderRadius: "50%",
+                        background: "#f2d04e", color: "#24221b",
+                        border: "2px solid rgba(255,255,255,0.2)",
+                        display: "flex", alignItems: "center", justifyContent: "center",
+                        fontSize: 12, fontWeight: 700, cursor: "pointer",
+                        transition: "transform 0.2s, box-shadow 0.2s",
+                        boxShadow: profileOpen ? "0 0 0 3px rgba(242,208,78,0.4)" : "none",
+                      }}
+                    >
+                      {currentUser.fullName.split(" ").map(n => n[0]).slice(0, 2).join("").toUpperCase()}
+                    </button>
+
+                    {profileOpen && (
+                      <>
+                        <div
+                          onClick={() => setProfileOpen(false)}
+                          style={{
+                            position: "fixed", inset: 0, zIndex: 98,
+                          }}
+                        />
+
+                        <div style={{
+                          position: "absolute", top: "calc(100% + 12px)", right: 0,
+                          width: 220, background: "#fff", borderRadius: 14,
+                          boxShadow: "0 8px 32px rgba(0,0,0,0.18)",
+                          border: "1px solid rgba(0,0,0,0.08)",
+                          zIndex: 99, overflow: "hidden",
+                          animation: "lp-fadein 0.18s ease both",
+                        }}>
+
+                          <div style={{
+                            padding: "14px 16px 12px",
+                            borderBottom: "1px solid rgba(0,0,0,0.07)",
+                          }}>
+                            <div style={{ fontWeight: 700, fontSize: 14, color: "#1a1a1a" }}>
+                              {currentUser.fullName}
+                            </div>
+                            <div style={{ fontSize: 12, color: "#888", marginTop: 2 }}>
+                              {currentUser.email}
+                            </div>
+                            <div style={{
+                              display: "inline-block", marginTop: 6,
+                              fontSize: 10, fontWeight: 700, letterSpacing: "0.06em",
+                              background: currentUser.role === "admin" ? "#fff3cd" : "#e8f5e9",
+                              color: currentUser.role === "admin" ? "#b8880e" : "#2e7d32",
+                              border: `1px solid ${currentUser.role === "admin" ? "#f0d88a" : "#a5d6a7"}`,
+                              padding: "2px 8px", borderRadius: 999, textTransform: "uppercase",
+                            }}>
+                              {currentUser.role}
+                            </div>
+                          </div>
+
+                          <Link
+                            href="/dashboard"
+                            onClick={() => setProfileOpen(false)}
+                            style={{
+                              display: "flex", alignItems: "center", gap: 10,
+                              padding: "11px 16px", fontSize: 13, fontWeight: 500,
+                              color: "#1a1a1a", textDecoration: "none",
+                              transition: "background 0.15s",
+                            }}
+                            onMouseEnter={e => (e.currentTarget.style.background = "#f5f5f5")}
+                            onMouseLeave={e => (e.currentTarget.style.background = "transparent")}
+                          >
+                            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                              <rect x="3" y="3" width="7" height="7" /><rect x="14" y="3" width="7" height="7" />
+                              <rect x="3" y="14" width="7" height="7" /><rect x="14" y="14" width="7" height="7" />
+                            </svg>
+                            Dashboard
+                          </Link>
+
+                          <div style={{ height: 1, background: "rgba(0,0,0,0.06)", margin: "0 12px" }} />
+
+                          <button
+                            onClick={() => {
+                              setProfileOpen(false)
+                              localStorage.removeItem("token")
+                              localStorage.removeItem("user")
+                              setCurrentUser(null)
+                            }}
+                            style={{
+                              display: "flex", alignItems: "center", gap: 10, width: "100%",
+                              padding: "11px 16px", fontSize: 13, fontWeight: 500,
+                              color: "#e53e3e", background: "transparent",
+                              border: "none", cursor: "pointer", textAlign: "left",
+                              transition: "background 0.15s",
+                            }}
+                            onMouseEnter={e => (e.currentTarget.style.background = "#fff5f5")}
+                            onMouseLeave={e => (e.currentTarget.style.background = "transparent")}
+                          >
+                            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                              <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4" />
+                              <polyline points="16 17 21 12 16 7" />
+                              <line x1="21" y1="12" x2="9" y2="12" />
+                            </svg>
+                            Logout
+                          </button>
+
+                        </div>
+                      </>
+                    )}
+                  </div>
+                </>
+              ) : (
+                <>
+                  <Link href="/login" className="lp-btn lp-btn--footer-outline lp-btn--sm">Login</Link>
+                  <Link href="/register" className="lp-btn lp-btn--primary lp-btn--sm">Register</Link>
+                </>
+              )}
             </div>
             <button className="lp-nav__hamburger" onClick={() => setMenuOpen(!menuOpen)} aria-label="Toggle menu">
               <span /><span /><span />

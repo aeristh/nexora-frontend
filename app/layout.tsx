@@ -70,6 +70,21 @@ const ProjectsIcon = () => (
   </svg>
 )
 
+const BackIcon = () => (
+  <svg viewBox="0 0 24 24" fill="none" strokeWidth="2"
+    strokeLinecap="round" strokeLinejoin="round">
+    <polyline points="15 18 9 12 15 6" />
+    <line x1="9" y1="12" x2="21" y2="12" />
+  </svg>
+)
+
+const CommentIcon = () => (
+  <svg viewBox="0 0 24 24" fill="none" strokeWidth="2"
+    strokeLinecap="round" strokeLinejoin="round">
+    <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z" />
+  </svg>
+)
+
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   const pathname = usePathname()
   const [isAdmin, setIsAdmin] = useState(false)
@@ -101,6 +116,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
     { href: "/blog", label: "Blog", Icon: BlogIcon },
     ...(isAdmin ? [
       { href: "/projects-admin", label: "Projects", Icon: ProjectsIcon },
+      { href: "/admin/comments", label: "Comments", Icon: CommentIcon },
       { href: "/settings", label: "Users", Icon: UsersIcon },
     ] : []),
   ]
@@ -131,12 +147,62 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
             <aside className="sidebar">
               <h2>Nexora</h2>
               <nav>
+
+                <Link
+                  href="/"
+                  style={{
+                    display: "flex",
+                    alignItems: "center",
+                    gap: 10,
+                    padding: "9px 14px",
+                    borderRadius: 10,
+                    marginBottom: 8,
+                    fontSize: 13,
+                    fontWeight: 600,
+                    color: "rgba(255,255,255,0.55)",
+                    textDecoration: "none",
+                    border: "1px dashed rgba(255,255,255,0.15)",
+                    background: "rgba(255,255,255,0.04)",
+                    transition: "all 0.2s",
+                    letterSpacing: "0.01em",
+                  }}
+                  onMouseEnter={e => {
+                    e.currentTarget.style.color = "#f2d04e"
+                    e.currentTarget.style.borderColor = "rgba(242,208,78,0.4)"
+                    e.currentTarget.style.background = "rgba(242,208,78,0.07)"
+                  }}
+                  onMouseLeave={e => {
+                    e.currentTarget.style.color = "rgba(255,255,255,0.55)"
+                    e.currentTarget.style.borderColor = "rgba(255,255,255,0.15)"
+                    e.currentTarget.style.background = "rgba(255,255,255,0.04)"
+                  }}
+                >
+                  <span style={{
+                    width: 28, height: 28, borderRadius: 8,
+                    background: "rgba(242,208,78,0.12)",
+                    border: "1px solid rgba(242,208,78,0.25)",
+                    display: "flex", alignItems: "center", justifyContent: "center",
+                    flexShrink: 0,
+                  }}>
+                    <BackIcon />
+                  </span>
+                  Portfolio
+                </Link>
+
+                <div style={{
+                  height: 1,
+                  background: "rgba(255,255,255,0.07)",
+                  margin: "0 4px 10px",
+                  borderRadius: 1,
+                }} />
+
                 {navItems.map(({ href, label, Icon }) => (
                   <Link key={href} href={href} className={pathname === href ? "active" : ""}>
                     <Icon />
                     {label}
                   </Link>
                 ))}
+
               </nav>
               <div className="sidebar-bottom">
                 <button className="logout-btn" onClick={() => setLogoutConfirm(true)}>

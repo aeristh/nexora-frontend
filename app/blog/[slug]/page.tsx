@@ -17,6 +17,14 @@ type Blog = {
     updatedAt: string
 }
 
+type Comment = {
+    id: number
+    content: string
+    status: 'approved' | 'hidden'
+    userName: string
+    createdAt: string
+}
+
 const BASE = process.env.NEXT_PUBLIC_API_URL || "http://localhost:3333"
 
 function formatDate(iso: string) {
@@ -30,6 +38,20 @@ function getInitials(name: string) {
     return name.split(" ").map(n => n[0]).join("").slice(0, 2).toUpperCase()
 }
 
+function sensorContent(text: string) {
+    const trimmed = text.trim()
+
+    if (trimmed.length <= 3) return "***"
+    const visible = trimmed.slice(0, 3)
+    const hidden = "*".repeat(trimmed.length - 3)
+    return `${visible}${hidden}`
+}
+function formatDateShort(iso: string) {
+    return new Date(iso).toLocaleDateString("id-ID", {
+        day: "numeric", month: "short", year: "numeric"
+    })
+}
+
 export default function BlogDetailPage() {
     const params = useParams()
     const [blog, setBlog] = useState<Blog | null>(null)
@@ -38,9 +60,56 @@ export default function BlogDetailPage() {
     const [isLoggedIn, setIsLoggedIn] = useState(false)
     const [scrolled, setScrolled] = useState(false)
 
+    const [comments, setComments] = useState<Comment[]>([])
+    const [commentText, setCommentText] = useState("")
+    const [submitting, setSubmitting] = useState(false)
+    const [submitMsg, setSubmitMsg] = useState<string | null>(null)
+    const [currentUser, setCurrentUser] = useState<{ fullName: string } | null>(null)
+
+    async function handleSubmitComment() {
+        if (!commentText.trim() || !blog) return
+        const token = localStorage.getItem("token")
+        if (!token) return
+
+        setSubmitting(true)
+        setSubmitMsg(null)
+
+        try {
+            const res = await fetch(`${BASE}/blogs/${blog.id}/comments`, {
+                method: "POST",
+                headers: {
+                    "Content-Type": "application/json",
+                    Authorization: `Bearer ${token}`,
+                },
+                body: JSON.stringify({ content: commentText }),
+            })
+
+            if (res.ok) {
+                setCommentText("")
+                setSubmitMsg("✓ Komentar terkirim!")
+                setTimeout(() => setSubmitMsg(null), 3000)
+
+                const cmtRes = await fetch(`${BASE}/blogs/${blog.id}/comments`)
+                if (cmtRes.ok) {
+                    const cmtData = await cmtRes.json()
+                    setComments(Array.isArray(cmtData) ? cmtData : [])
+                }
+            }
+        } catch {
+            setSubmitMsg("Gagal mengirim komentar.")
+        } finally {
+            setSubmitting(false)
+        }
+    }
+
     useEffect(() => {
         const token = localStorage.getItem("token")
         setIsLoggedIn(!!token)
+
+        const userData = localStorage.getItem("user")
+        if (userData) {
+            try { setCurrentUser(JSON.parse(userData)) } catch { }
+        }
 
         const onScroll = () => setScrolled(window.scrollY > 20)
         window.addEventListener("scroll", onScroll)
@@ -54,6 +123,13 @@ export default function BlogDetailPage() {
                 if (!res.ok) { setNotFound(true); return }
                 const data = await res.json()
                 setBlog(data.data || data)
+
+                const blogId = (data.data || data).id
+                const cmtRes = await fetch(`${BASE}/blogs/${blogId}/comments`)
+                if (cmtRes.ok) {
+                    const cmtData = await cmtRes.json()
+                    setComments(Array.isArray(cmtData) ? cmtData : [])
+                }
             } catch {
                 setNotFound(true)
             } finally {
@@ -65,8 +141,8 @@ export default function BlogDetailPage() {
         return () => window.removeEventListener("scroll", onScroll)
     }, [params.slug])
 
-    const backUrl = isLoggedIn ? "/blog" : "/articles"
-    const backLabel = isLoggedIn ? "Kembali ke Blog" : "Kembali ke Artikel"
+    const backUrl = "/articles"
+    const backLabel = "Kembali ke Artikel"
     const coverSrc = blog?.coverImage?.replace('/uploads', '/api-uploads') ?? ''
 
     return (
@@ -128,6 +204,93 @@ export default function BlogDetailPage() {
                                             </div>
                                         </div>
                                         <div className="bd-body" dangerouslySetInnerHTML={{ __html: blog.content }} />
+
+                                        <div className="bd-comment-section">
+                                            <div className="bd-comment-header">
+                                                <svg width="18" height="18" viewBox="0 0 24 24" fill="none"
+                                                    stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                                                    <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z" />
+                                                </svg>
+                                                <span>Komentar</span>
+                                                <span className="bd-comment-count">{comments.length}</span>
+                                            </div>
+
+                                            {comments.length === 0 ? (
+                                                <p className="bd-comment-empty">Belum ada komentar. Jadilah yang pertama!</p>
+                                            ) : (
+                                                <div className="bd-comment-list">
+                                                    {comments.map(c => (
+                                                        <div key={c.id} className="bd-comment-item">
+                                                            <div className="bd-comment-avatar">
+                                                                {c.userName.split(" ").map((n: string) => n[0]).slice(0, 2).join("").toUpperCase()}
+                                                            </div>
+                                                            <div className="bd-comment-body">
+                                                                <div className="bd-comment-top">
+                                                                    <span className="bd-comment-name">{c.userName}</span>
+                                                                    <span className="bd-comment-date">{formatDateShort(c.createdAt)}</span>
+                                                                    {c.status === 'hidden' && (
+                                                                        <span className="bd-comment-badge">disensor</span>
+                                                                    )}
+                                                                </div>
+                                                                <p className="bd-comment-text">
+                                                                    {c.status === 'hidden' ? sensorContent(c.content) : c.content}
+                                                                </p>
+                                                            </div>
+                                                        </div>
+                                                    ))}
+                                                </div>
+                                            )}
+
+                                            <div className={`bd-comment-form-wrap ${!isLoggedIn ? "bd-comment-form-wrap--locked" : ""}`}>
+                                                <div className="bd-comment-form-label">
+                                                    {isLoggedIn ? (
+                                                        <span>Komentar sebagai <strong>{currentUser?.fullName}</strong></span>
+                                                    ) : (
+                                                        <span className="bd-comment-lock-msg">
+                                                            <svg width="13" height="13" viewBox="0 0 24 24" fill="none"
+                                                                stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                                                                <rect x="3" y="11" width="18" height="11" rx="2" />
+                                                                <path d="M7 11V7a5 5 0 0 1 10 0v4" />
+                                                            </svg>
+                                                            Login untuk berkomentar
+                                                            <Link href="/login" className="bd-comment-login-link">→ Login</Link>
+                                                        </span>
+                                                    )}
+                                                </div>
+
+                                                <textarea
+                                                    className="bd-comment-textarea"
+                                                    placeholder={isLoggedIn ? "Tulis komentar..." : "Login untuk bisa berkomentar..."}
+                                                    value={commentText}
+                                                    onChange={e => setCommentText(e.target.value)}
+                                                    disabled={!isLoggedIn || submitting}
+                                                    rows={3}
+                                                />
+
+                                                {submitMsg && (
+                                                    <p className={`bd-comment-msg ${submitMsg.startsWith("✓")
+                                                        ? "bd-comment-msg--ok" : "bd-comment-msg--err"}`}>
+                                                        {submitMsg}
+                                                    </p>
+                                                )}
+
+                                                {isLoggedIn && (
+                                                    <button
+                                                        className="bd-comment-submit"
+                                                        onClick={handleSubmitComment}
+                                                        disabled={submitting || !commentText.trim()}
+                                                    >
+                                                        {submitting ? "Mengirim..." : "Kirim Komentar"}
+                                                    </button>
+                                                )}
+
+                                                {isLoggedIn && (
+                                                    <p className="bd-comment-note">
+                                                        * Komentar akan tampil setelah disetujui admin.
+                                                    </p>
+                                                )}
+                                            </div>
+                                        </div>
                                     </div>
                                 </div>
                             ) : (
@@ -306,4 +469,109 @@ const detailStyles = `
     .bd-cover-side { position: static; max-width: 260px; }
     .bd-footer { padding: 20px; }
   }
+
+.bd-comment-section {
+  margin-top: 56px; padding-top: 40px;
+  border-top: 2px solid #e8e4de;
+}
+.bd-comment-header {
+  display: flex; align-items: center; gap: 8px;
+  font-size: 16px; font-weight: 700; color: #1a1a1a;
+  margin-bottom: 24px;
+}
+.bd-comment-count {
+  background: #f2d04e; color: #24221b;
+  font-size: 11px; font-weight: 800;
+  padding: 2px 8px; border-radius: 999px;
+}
+.bd-comment-empty {
+  font-size: 14px; color: #aaa; text-align: center;
+  padding: 24px 0; border: 1.5px dashed #e0dbd4;
+  border-radius: 12px; margin-bottom: 24px;
+}
+.bd-comment-list {
+  display: flex; flex-direction: column; gap: 16px;
+  margin-bottom: 32px;
+}
+.bd-comment-item {
+  display: flex; gap: 12px; background: #fff;
+  border: 1.5px solid #eae7e1; border-radius: 12px;
+  padding: 14px 16px;
+}
+.bd-comment-avatar {
+  width: 36px; height: 36px; border-radius: 50%;
+  flex-shrink: 0; background: #f2d04e; color: #24221b;
+  font-size: 11px; font-weight: 800;
+  display: flex; align-items: center; justify-content: center;
+}
+.bd-comment-body { flex: 1; min-width: 0; }
+.bd-comment-top {
+  display: flex; align-items: center; gap: 8px;
+  flex-wrap: wrap; margin-bottom: 6px;
+}
+.bd-comment-name { font-size: 13px; font-weight: 700; color: #1a1a1a; }
+.bd-comment-date { font-size: 11px; color: #bbb; }
+.bd-comment-badge {
+  font-size: 10px; font-weight: 700;
+  background: #fff3cd; color: #b8880e;
+  border: 1px solid #f0d88a;
+  padding: 1px 7px; border-radius: 999px;
+}
+.bd-comment-text { font-size: 14px; color: #555; line-height: 1.7; margin: 0; }
+.bd-comment-form-wrap {
+  background: #fff; border: 1.5px solid #e0dbd4;
+  border-radius: 14px; padding: 16px;
+  transition: border-color 0.2s, background 0.2s;
+}
+.bd-comment-form-wrap--locked {
+  border-color: #f5c6c6; background: #fffafa;
+}
+.bd-comment-form-label {
+  font-size: 12.5px; color: #888; margin-bottom: 10px;
+}
+.bd-comment-lock-msg {
+  display: flex; align-items: center; gap: 6px;
+  color: #e53e3e; font-weight: 600; font-size: 13px;
+}
+.bd-comment-login-link {
+  color: #c8960a; font-weight: 700; text-decoration: none;
+  margin-left: 4px; transition: color 0.15s;
+}
+.bd-comment-login-link:hover { color: #a37208; }
+.bd-comment-textarea {
+  width: 100%; min-height: 88px;
+  border: 1.5px solid #e0dbd4; border-radius: 10px;
+  padding: 10px 14px; font-size: 14px;
+  font-family: "DM Sans", sans-serif;
+  color: #1a1a1a; resize: vertical;
+  transition: border-color 0.2s, background 0.2s;
+  box-sizing: border-box; outline: none; background: #fff;
+}
+.bd-comment-textarea:focus { border-color: #f2d04e; }
+.bd-comment-form-wrap--locked .bd-comment-textarea {
+  border-color: #f5c6c6; background: #fff5f5;
+  cursor: not-allowed; color: #ccc;
+}
+.bd-comment-submit {
+  margin-top: 10px; background: #24221b; color: #f2d04e;
+  border: none; border-radius: 999px;
+  padding: 9px 22px; font-size: 13px; font-weight: 700;
+  cursor: pointer; transition: background 0.2s, opacity 0.2s;
+  font-family: "DM Sans", sans-serif;
+}
+.bd-comment-submit:hover:not(:disabled) { background: #363329; }
+.bd-comment-submit:disabled { opacity: 0.45; cursor: not-allowed; }
+.bd-comment-note {
+  font-size: 11.5px; color: #bbb; margin: 8px 0 0;
+}
+.bd-comment-msg {
+  font-size: 13px; font-weight: 600;
+  margin: 8px 0 0; padding: 8px 12px; border-radius: 8px;
+}
+.bd-comment-msg--ok {
+  background: #f0fdf4; color: #166534; border: 1px solid #bbf7d0;
+}
+.bd-comment-msg--err {
+  background: #fff5f5; color: #e53e3e; border: 1px solid #f5c6c6;
+}
 `
