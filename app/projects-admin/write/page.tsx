@@ -273,7 +273,7 @@ function ProjectWriteContent() {
                                 </label>
                                 <textarea
                                     className="pw-textarea"
-                                    placeholder="Ceritakan lebih detail tentang project ini: teknologi yang digunakan, tantangan, hasil, dll..."
+                                    placeholder="Detail tentang project..."
                                     value={content}
                                     onChange={e => setContent(e.target.value)}
                                     rows={8}
