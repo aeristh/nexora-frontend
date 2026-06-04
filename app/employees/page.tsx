@@ -235,12 +235,23 @@ export default function EmployeesPage() {
                         + Tambah Pegawai
                     </button>
                 )}
-                <input
-                    placeholder="Cari nama, posisi, atau nomor telepon..."
-                    value={search}
-                    onChange={(e) => setSearch(e.target.value)}
-                    style={{ flex: 1, minWidth: 200, margin: 0 }}
-                />
+                <div style={{ flex: 1, minWidth: 200, position: "relative" }}>
+                    <svg style={{
+                        position: "absolute", left: 10, top: "50%", transform: "translateY(-50%)",
+                        width: 14, height: 14, stroke: "#bbb", fill: "none",
+                        strokeWidth: 2, strokeLinecap: "round", strokeLinejoin: "round",
+                        pointerEvents: "none",
+                    }} viewBox="0 0 24 24">
+                        <circle cx="11" cy="11" r="8" />
+                        <line x1="21" y1="21" x2="16.65" y2="16.65" />
+                    </svg>
+                    <input
+                        placeholder="Cari nama, posisi, atau nomor telepon..."
+                        value={search}
+                        onChange={(e) => setSearch(e.target.value)}
+                        style={{ width: "100%", margin: 0, paddingLeft: 32, boxSizing: "border-box" as const }}
+                    />
+                </div>
             </div>
 
             {loading ? <p>Loading data...</p> : (
@@ -260,12 +271,27 @@ export default function EmployeesPage() {
                         <tbody>
                             {filtered.length === 0 ? (
                                 <tr>
-                                    <td colSpan={isAdmin ? 7 : 6} style={{
-                                        textAlign: "center", padding: "40px 20px",
-                                        color: "#9ca3af", fontSize: 14,
-                                    }}>
-                                        <div style={{ fontSize: 32, marginBottom: 8 }}></div>
-                                        Tidak ada data yang ditemukan.
+                                    <td colSpan={isAdmin ? 7 : 6} style={{ padding: "60px 20px" }}>
+                                        <div style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: 10 }}>
+                                            <div style={{
+                                                width: 72, height: 72, borderRadius: "50%",
+                                                background: "#f2efe9", display: "flex",
+                                                alignItems: "center", justifyContent: "center",
+                                            }}>
+                                                <svg width="32" height="32" viewBox="0 0 24 24" fill="none"
+                                                    stroke="#c5c0b6" strokeWidth="1.2" strokeLinecap="round" strokeLinejoin="round">
+                                                    <circle cx="11" cy="11" r="8" />
+                                                    <line x1="21" y1="21" x2="16.65" y2="16.65" />
+                                                    <line x1="8" y1="11" x2="14" y2="11" />
+                                                </svg>
+                                            </div>
+                                            <p style={{ fontSize: 14, fontWeight: 600, color: "#6b7280", margin: 0 }}>
+                                                Tidak ada data yang ditemukan
+                                            </p>
+                                            <p style={{ fontSize: 12, color: "#9ca3af", margin: 0 }}>
+                                                Coba ubah kata kunci pencarian.
+                                            </p>
+                                        </div>
                                     </td>
                                 </tr>
                             ) : filtered.map((emp, index) => (

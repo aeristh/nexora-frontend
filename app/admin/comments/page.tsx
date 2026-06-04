@@ -4,9 +4,47 @@ import { useEffect, useState } from "react"
 import { useRouter } from "next/navigation"
 import ConfirmModal from "@/app/components/ConfirmModal"
 
+const EyeIcon = () => (
+    <svg viewBox="0 0 24 24" fill="none" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"
+        style={{ width: 15, height: 15, stroke: "currentColor" }}>
+        <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z" />
+        <circle cx="12" cy="12" r="3" />
+    </svg>
+)
+
+const EyeOffIcon = () => (
+    <svg viewBox="0 0 24 24" fill="none" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"
+        style={{ width: 15, height: 15, stroke: "currentColor" }}>
+        <path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94" />
+        <path d="M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19" />
+        <line x1="1" y1="1" x2="23" y2="23" />
+    </svg>
+)
+
+const ExternalLinkIcon = () => (
+    <svg viewBox="0 0 24 24" fill="none" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"
+        style={{ width: 15, height: 15, stroke: "currentColor" }}>
+        <path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6" />
+        <polyline points="15 3 21 3 21 9" />
+        <line x1="10" y1="14" x2="21" y2="3" />
+    </svg>
+)
+
+const TrashIcon = () => (
+    <svg viewBox="0 0 24 24" fill="none" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"
+        style={{ width: 15, height: 15, stroke: "currentColor" }}>
+        <polyline points="3 6 5 6 21 6" />
+        <path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6" />
+        <path d="M10 11v6" /><path d="M14 11v6" />
+        <path d="M9 6V4a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v2" />
+    </svg>
+)
+
 type Comment = {
     id: number
     blogId: number
+    blogSlug: string
+    blogTitle: string | null
     content: string
     status: 'approved' | 'hidden'
     userName: string
@@ -38,6 +76,12 @@ export default function AdminCommentsPage() {
     const [actionLoading, setActionLoading] = useState<number | null>(null)
     const [deleteTarget, setDeleteTarget] = useState<number | null>(null)
 
+    const [toast, setToast] = useState("")
+    const showToast = (msg: string) => {
+        setToast(msg)
+        setTimeout(() => setToast(""), 2500)
+    }
+
     useEffect(() => {
         const token = localStorage.getItem("token")
         const user = localStorage.getItem("user")
@@ -55,6 +99,7 @@ export default function AdminCommentsPage() {
             })
             if (!res.ok) throw new Error()
             const data = await res.json()
+            console.log(data[0])
             setComments(Array.isArray(data) ? data : [])
         } catch {
             setComments([])
@@ -79,6 +124,7 @@ export default function AdminCommentsPage() {
                 setComments(prev =>
                     prev.map(c => c.id === id ? { ...c, status } : c)
                 )
+                showToast(status === 'approved' ? "Komentar ditampilkan" : "Komentar disensor")
             }
         } finally {
             setActionLoading(null)
@@ -96,6 +142,7 @@ export default function AdminCommentsPage() {
             })
             if (res.ok) {
                 setComments(prev => prev.filter(c => c.id !== deleteTarget))
+                showToast("Komentar berhasil dihapus")
             }
         } finally {
             setActionLoading(null)
@@ -113,6 +160,7 @@ export default function AdminCommentsPage() {
 
     return (
         <div>
+            {toast && <div className="toast">{toast}</div>}
             <ConfirmModal
                 isOpen={deleteTarget !== null}
                 title="Hapus Komentar"
@@ -155,8 +203,7 @@ export default function AdminCommentsPage() {
                         {s.label}
                         <span style={{
                             background: filter === s.key ? "rgba(0,0,0,0.12)" : "var(--border, #eee)",
-                            padding: "1px 8px", borderRadius: 999,
-                            fontSize: 12,
+                            padding: "1px 8px", borderRadius: 999, fontSize: 12,
                         }}>
                             {s.value}
                         </span>
@@ -177,96 +224,83 @@ export default function AdminCommentsPage() {
                     <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
                         {filtered.map(c => (
                             <div key={c.id} style={{
-                                background: "var(--bg, #fff)",
-                                border: `1.5px solid ${c.status === 'hidden' ? "#fde8e8" : "#e8f5e9"}`,
-                                borderRadius: 12, padding: "14px 16px",
-                                display: "flex", gap: 14, alignItems: "flex-start",
-                                transition: "border-color 0.2s",
+                                background: "var(--bg-card, #fff)",
+                                border: "0.5px solid var(--border, #e8e8e8)",
+                                borderLeft: `3px solid ${c.status === 'hidden' ? "#E24B4A" : "#639922"}`,
+                                borderRadius: "0 12px 12px 0",
+                                padding: "14px 16px",
+                                display: "flex", gap: 12, alignItems: "center",
                             }}>
-
                                 <div style={{
-                                    width: 38, height: 38, borderRadius: "50%", flexShrink: 0,
+                                    width: 36, height: 36, borderRadius: "50%", flexShrink: 0,
                                     background: "#f2d04e", color: "#24221b",
                                     display: "flex", alignItems: "center", justifyContent: "center",
-                                    fontSize: 12, fontWeight: 800,
+                                    fontSize: 11, fontWeight: 700,
                                 }}>
                                     {c.userName.split(" ").map(n => n[0]).slice(0, 2).join("").toUpperCase()}
                                 </div>
 
                                 <div style={{ flex: 1, minWidth: 0 }}>
-                                    <div style={{ display: "flex", alignItems: "center", gap: 8, flexWrap: "wrap", marginBottom: 6 }}>
-                                        <span style={{ fontWeight: 700, fontSize: 13 }}>{c.userName}</span>
-                                        <span style={{ fontSize: 11, color: "#bbb" }}>{formatDate(c.createdAt)}</span>
-                                        <span style={{ fontSize: 11, color: "#aaa" }}>· Blog #{c.blogId}</span>
-
-                                        <span style={{
-                                            fontSize: 10, fontWeight: 700, padding: "2px 8px", borderRadius: 999,
-                                            background: c.status === 'approved' ? "#d1fae5" : "#fee2e2",
-                                            color: c.status === 'approved' ? "#065f46" : "#991b1b",
-                                            border: `1px solid ${c.status === 'approved' ? "#6ee7b7" : "#fca5a5"}`,
-                                        }}>
-                                            {c.status === 'approved' ? "Tampil" : "Tersensor"}
-                                        </span>
+                                    <div style={{ display: "flex", alignItems: "center", gap: 8, flexWrap: "wrap", marginBottom: 4 }}>
+                                        <span style={{ fontWeight: 600, fontSize: 13, color: "var(--text-primary, #1a1a1a)" }}>{c.userName}</span>
+                                        <span style={{ fontSize: 11, color: "var(--text-tertiary, #bbb)" }}>{formatDate(c.createdAt)}</span>
+                                        <span style={{ fontSize: 11, color: "var(--text-tertiary, #bbb)" }}>· {c.blogTitle}</span>
                                     </div>
-
-                                    <p style={{ fontSize: 14, color: "#444", margin: "0 0 10px", lineHeight: 1.6 }}>
+                                    <p style={{ fontSize: 13, color: "var(--text-secondary, #555)", margin: 0, lineHeight: 1.6 }}>
                                         {c.content}
                                     </p>
+                                </div>
 
-                                    {c.status === 'hidden' && (
-                                        <p style={{
-                                            fontSize: 12, color: "#aaa", margin: "0 0 10px",
-                                            fontStyle: "italic", background: "#fafafa",
-                                            padding: "6px 10px", borderRadius: 8,
-                                            border: "1px dashed #eee",
-                                        }}>
-                                            Tampilan pengunjung: "{sensorContent(c.content)}"
-                                        </p>
-                                    )}
+                                <div style={{ display: "flex", gap: 6, flexShrink: 0, alignItems: "center", minWidth: 160, justifyContent: "flex-end" }}>
 
-                                    {/* Tombol aksi */}
-                                    <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
-                                        {c.status === 'hidden' ? (
-                                            <button
-                                                onClick={() => handleStatus(c.id, 'approved')}
-                                                disabled={actionLoading === c.id}
-                                                style={{
-                                                    padding: "6px 14px", borderRadius: 999, border: "none",
-                                                    background: "#d1fae5", color: "#065f46",
-                                                    fontSize: 12, fontWeight: 700, cursor: "pointer",
-                                                    fontFamily: "inherit", opacity: actionLoading === c.id ? 0.5 : 1,
-                                                }}
-                                            >
-                                                Tampilkan
-                                            </button>
-                                        ) : (
-                                            <button
-                                                onClick={() => handleStatus(c.id, 'hidden')}
-                                                disabled={actionLoading === c.id}
-                                                style={{
-                                                    padding: "6px 14px", borderRadius: 999, border: "none",
-                                                    background: "#fee2e2", color: "#991b1b",
-                                                    fontSize: 12, fontWeight: 700, cursor: "pointer",
-                                                    fontFamily: "inherit", opacity: actionLoading === c.id ? 0.5 : 1,
-                                                }}
-                                            >
-                                                Sensor
-                                            </button>
-                                        )}
-                                        <button
-                                            onClick={() => setDeleteTarget(c.id)}
-                                            disabled={actionLoading === c.id}
-                                            style={{
-                                                padding: "6px 14px", borderRadius: 999,
-                                                border: "1.5px solid #eee", background: "transparent",
-                                                color: "#999", fontSize: 12, fontWeight: 600,
-                                                cursor: "pointer", fontFamily: "inherit",
-                                                opacity: actionLoading === c.id ? 0.5 : 1,
-                                            }}
-                                        >
-                                            Hapus
-                                        </button>
-                                    </div>
+                                    <button
+                                        onClick={() => handleStatus(c.id, c.status === 'hidden' ? 'approved' : 'hidden')}
+                                        disabled={actionLoading === c.id}
+                                        title={c.status === 'hidden' ? "Klik untuk tampilkan" : "Klik untuk sensor"}
+                                        style={{
+                                            display: "inline-flex", alignItems: "center", gap: 5,
+                                            padding: "5px 12px", borderRadius: 999, border: "none",
+                                            cursor: "pointer", transition: "opacity 0.2s", fontFamily: "inherit",
+                                            fontSize: 12, fontWeight: 600,
+                                            background: c.status === 'approved' ? "#EAF3DE" : "#FCEBEB",
+                                            color: c.status === 'approved' ? "#27500A" : "#791F1F",
+                                            opacity: actionLoading === c.id ? 0.5 : 1,
+                                        }}
+                                        onMouseEnter={e => (e.currentTarget as HTMLButtonElement).style.opacity = "0.75"}
+                                        onMouseLeave={e => (e.currentTarget as HTMLButtonElement).style.opacity = actionLoading === c.id ? "0.5" : "1"}
+                                    >
+                                        {c.status === 'approved' ? <EyeIcon /> : <EyeOffIcon />}
+                                        {c.status === 'approved' ? "Tampil" : "Tersensor"}
+                                    </button>
+
+                                    <button
+                                        onClick={() => router.push(`/blog/${c.blogSlug}`)}
+                                        title="Lihat Artikel"
+                                        style={{
+                                            width: 32, height: 32, borderRadius: 8, cursor: "pointer",
+                                            display: "flex", alignItems: "center", justifyContent: "center",
+                                            border: "1px solid #e5e7eb", background: "#fff",
+                                            color: "#6b7280", transition: "all 0.15s",
+                                        }}
+                                    >
+                                        <ExternalLinkIcon />
+                                    </button>
+
+                                    <button
+                                        onClick={() => setDeleteTarget(c.id)}
+                                        disabled={actionLoading === c.id}
+                                        title="Hapus"
+                                        style={{
+                                            width: 32, height: 32, borderRadius: 8, cursor: "pointer",
+                                            display: "flex", alignItems: "center", justifyContent: "center",
+                                            border: "1px solid #fecaca", background: "#fff5f5",
+                                            color: "#ef4444",
+                                            opacity: actionLoading === c.id ? 0.5 : 1,
+                                            transition: "all 0.15s",
+                                        }}
+                                    >
+                                        <TrashIcon />
+                                    </button>
                                 </div>
                             </div>
                         ))}

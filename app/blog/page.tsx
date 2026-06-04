@@ -82,6 +82,7 @@ export default function BlogPage() {
     const [loadingMore, setLoadingMore] = useState(false)
     const [deleteId, setDeleteId] = useState<number | null>(null)
     const [deleting, setDeleting] = useState(false)
+    const [search, setSearch] = useState("")
     const showMoreRef = useRef<HTMLDivElement>(null)
 
     useEffect(() => {
@@ -152,6 +153,12 @@ export default function BlogPage() {
     const pageSubtitle = isAdmin ? "Kelola semua artikel yang telah dipublikasikan" : "Artikel yang telah kamu publikasikan"
     const hasMore = visibleBlogs.length < allBlogs.length
 
+    const filtered = visibleBlogs.filter(b =>
+        b.title.toLowerCase().includes(search.toLowerCase()) ||
+        b.authorName.toLowerCase().includes(search.toLowerCase()) ||
+        stripHtml(b.content).toLowerCase().includes(search.toLowerCase())
+    )
+
     return (
         <>
             <style>{pageStyles}</style>
@@ -171,7 +178,11 @@ export default function BlogPage() {
                     </button>
                 </div>
 
-                <div className="bp-stats">
+                <div style={{
+                    display: "flex", alignItems: "center", justifyContent: "space-between",
+                    gap: 12, marginBottom: 24, paddingBottom: 16,
+                    borderBottom: "2px solid #f0f0f0", flexWrap: "wrap",
+                }}>
                     <span className="bp-stats__count">
                         <strong>{allBlogs.length}</strong> artikel
                         {!isAdmin && " ditulis oleh kamu"}
@@ -181,6 +192,52 @@ export default function BlogPage() {
                             </span>
                         )}
                     </span>
+
+                    <div style={{ position: "relative", width: 220 }}>
+                        <svg style={{
+                            position: "absolute", left: 10, top: "50%", transform: "translateY(-50%)",
+                            width: 13, height: 13, stroke: "#bbb", fill: "none",
+                            strokeWidth: 2, strokeLinecap: "round", strokeLinejoin: "round",
+                            pointerEvents: "none",
+                        }} viewBox="0 0 24 24">
+                            <circle cx="11" cy="11" r="8" />
+                            <line x1="21" y1="21" x2="16.65" y2="16.65" />
+                        </svg>
+                        <input
+                            type="text"
+                            placeholder="Cari artikel..."
+                            value={search}
+                            onChange={e => setSearch(e.target.value)}
+                            style={{
+                                width: "100%", padding: "7px 28px 7px 30px",
+                                border: "1.5px solid #e4e1db", borderRadius: 8,
+                                fontSize: 12.5, fontFamily: "inherit",
+                                background: "#fff", color: "#333", outline: "none",
+                                boxSizing: "border-box" as const,
+                                transition: "border-color 0.15s, box-shadow 0.15s",
+                            }}
+                            onFocus={e => {
+                                e.currentTarget.style.borderColor = "#f59e0b"
+                                e.currentTarget.style.boxShadow = "0 0 0 3px rgba(245,158,11,0.1)"
+                            }}
+                            onBlur={e => {
+                                e.currentTarget.style.borderColor = "#e4e1db"
+                                e.currentTarget.style.boxShadow = "none"
+                            }}
+                        />
+                        {search && (
+                            <button onClick={() => setSearch("")} style={{
+                                position: "absolute", right: 8, top: "50%", transform: "translateY(-50%)",
+                                background: "none", border: "none", cursor: "pointer",
+                                color: "#bbb", display: "flex", alignItems: "center", padding: 0,
+                            }}>
+                                <svg width="10" height="10" viewBox="0 0 24 24" fill="none"
+                                    stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                                    <line x1="18" y1="6" x2="6" y2="18" /><line x1="6" y1="6" x2="18" y2="18" />
+                                </svg>
+                            </button>
+                        )}
+                    </div>
                 </div>
 
                 {loading ? (
@@ -196,10 +253,32 @@ export default function BlogPage() {
                             Tulis Artikel Pertama
                         </button>
                     </div>
+
+                ) : filtered.length === 0 ? (
+                    <div style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: 10, padding: "60px 20px" }}>
+                        <div style={{
+                            width: 72, height: 72, borderRadius: "50%",
+                            background: "#f2efe9", display: "flex",
+                            alignItems: "center", justifyContent: "center",
+                        }}>
+                            <svg width="32" height="32" viewBox="0 0 24 24" fill="none"
+                                stroke="#c5c0b6" strokeWidth="1.2" strokeLinecap="round" strokeLinejoin="round">
+                                <circle cx="11" cy="11" r="8" />
+                                <line x1="21" y1="21" x2="16.65" y2="16.65" />
+                                <line x1="8" y1="11" x2="14" y2="11" />
+                            </svg>
+                        </div>
+                        <p style={{ fontSize: 14, fontWeight: 600, color: "#6b7280", margin: 0 }}>
+                            Tidak ada artikel ditemukan
+                        </p>
+                        <p style={{ fontSize: 12, color: "#9ca3af", margin: 0 }}>
+                            Coba ubah kata kunci pencarian.
+                        </p>
+                    </div>
                 ) : (
                     <>
                         <div className="bp-grid">
-                            {visibleBlogs.map((blog, i) => (
+                            {filtered.map((blog, i) => (
                                 <div
                                     key={blog.id}
                                     className={`bp-card ${i >= newStartIndex && newStartIndex > 0 ? "bp-card--new" : ""}`}

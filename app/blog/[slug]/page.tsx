@@ -236,6 +236,13 @@ export default function BlogDetailPage() {
             <style>{detailStyles}</style>
             <div className="bd-root">
 
+                <div className={`bd-toast ${copied ? "bd-toast--show" : ""}`}>
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                        <polyline points="20 6 9 17 4 12" />
+                    </svg>
+                    Link tersalin!
+                </div>
+
                 <nav className={`bd-nav ${scrolled ? "bd-nav--scrolled" : ""}`}>
                     <div className="bd-nav__inner">
                         <Link href={backUrl} className="bd-back-btn">
@@ -803,5 +810,31 @@ const detailStyles = `
   border-color: #f2d04e;
   color: #24221b;
   background: #fffdf0;
+}
+
+.bd-toast {
+  position: fixed;
+  bottom: 28px;
+  left: 50%;
+  transform: translateX(-50%) translateY(16px);
+  background: #24221b;
+  color: #f2d04e;
+  font-size: 13px;
+  font-weight: 600;
+  padding: 9px 18px;
+  border-radius: 999px;
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.22s ease, transform 0.22s ease;
+  z-index: 9999;
+  white-space: nowrap;
+  box-shadow: 0 4px 20px rgba(0,0,0,0.18);
+}
+.bd-toast--show {
+  opacity: 1;
+  transform: translateX(-50%) translateY(0);
 }
 `

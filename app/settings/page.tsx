@@ -60,6 +60,7 @@ export default function SettingsPage() {
     const [editingUser, setEditingUser] = useState<User | null>(null)
     const [editForm, setEditForm] = useState({ fullName: "", email: "" })
     const [editLoading, setEditLoading] = useState(false)
+    const [search, setSearch] = useState("")
 
     const [confirm, setConfirm] = useState<{
         open: boolean; title: string; message: string
@@ -168,6 +169,12 @@ export default function SettingsPage() {
 
     if (loading) return <p style={{ padding: "20px" }}>Memuat data...</p>
     if (!isAdmin) return null
+
+    const filtered = users.filter(u =>
+        u.fullName?.toLowerCase().includes(search.toLowerCase()) ||
+        u.email.toLowerCase().includes(search.toLowerCase()) ||
+        u.role.toLowerCase().includes(search.toLowerCase())
+    )
 
     const thStyle: React.CSSProperties = {
         textAlign: "left",
@@ -348,9 +355,56 @@ export default function SettingsPage() {
                 <h1 style={{ fontSize: 28, fontWeight: 700, letterSpacing: "-0.03em", marginBottom: 4 }}>
                     User Management
                 </h1>
-                <p style={{ fontSize: 13, color: "#9ca3af" }}>
-                    Kelola role dan status akun pengguna.
-                </p>
+                <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", flexWrap: "wrap", gap: 10 }}>
+                    <p style={{ fontSize: 13, color: "#9ca3af", margin: 0 }}>
+                        Kelola role dan status akun pengguna.
+                    </p>
+                    <div style={{ position: "relative", width: 220 }}>
+                        <svg style={{
+                            position: "absolute", left: 10, top: "50%", transform: "translateY(-50%)",
+                            width: 13, height: 13, stroke: "#bbb", fill: "none",
+                            strokeWidth: 2, strokeLinecap: "round", strokeLinejoin: "round",
+                            pointerEvents: "none",
+                        }} viewBox="0 0 24 24">
+                            <circle cx="11" cy="11" r="8" />
+                            <line x1="21" y1="21" x2="16.65" y2="16.65" />
+                        </svg>
+                        <input
+                            type="text"
+                            placeholder="Cari user..."
+                            value={search}
+                            onChange={e => setSearch(e.target.value)}
+                            style={{
+                                width: "100%", padding: "7px 28px 7px 30px",
+                                border: "1.5px solid #e4e1db", borderRadius: 8,
+                                fontSize: 12.5, fontFamily: "inherit",
+                                background: "#fff", color: "#333", outline: "none",
+                                boxSizing: "border-box" as const,
+                                transition: "border-color 0.15s, box-shadow 0.15s",
+                            }}
+                            onFocus={e => {
+                                e.currentTarget.style.borderColor = "#f59e0b"
+                                e.currentTarget.style.boxShadow = "0 0 0 3px rgba(245,158,11,0.1)"
+                            }}
+                            onBlur={e => {
+                                e.currentTarget.style.borderColor = "#e4e1db"
+                                e.currentTarget.style.boxShadow = "none"
+                            }}
+                        />
+                        {search && (
+                            <button onClick={() => setSearch("")} style={{
+                                position: "absolute", right: 8, top: "50%", transform: "translateY(-50%)",
+                                background: "none", border: "none", cursor: "pointer",
+                                color: "#bbb", display: "flex", alignItems: "center", padding: 0,
+                            }}>
+                                <svg width="10" height="10" viewBox="0 0 24 24" fill="none"
+                                    stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                                    <line x1="18" y1="6" x2="6" y2="18" /><line x1="6" y1="6" x2="18" y2="18" />
+                                </svg>
+                            </button>
+                        )}
+                    </div>
+                </div>
             </div>
 
             <div style={{ borderRadius: 14, overflow: "hidden", border: "1px solid #f0ece6" }}>
@@ -372,16 +426,32 @@ export default function SettingsPage() {
                         </tr>
                     </thead>
                     <tbody>
-                        {users.length === 0 ? (
+                        {filtered.length === 0 ? (
                             <tr>
-                                <td colSpan={5} style={{
-                                    textAlign: "center", padding: "40px",
-                                    color: "#9ca3af", fontSize: 14,
-                                }}>
-                                    Tidak ada user
+                                <td colSpan={5} style={{ padding: "60px 20px" }}>
+                                    <div style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: 10 }}>
+                                        <div style={{
+                                            width: 72, height: 72, borderRadius: "50%",
+                                            background: "#f2efe9", display: "flex",
+                                            alignItems: "center", justifyContent: "center",
+                                        }}>
+                                            <svg width="32" height="32" viewBox="0 0 24 24" fill="none"
+                                                stroke="#c5c0b6" strokeWidth="1.2" strokeLinecap="round" strokeLinejoin="round">
+                                                <circle cx="11" cy="11" r="8" />
+                                                <line x1="21" y1="21" x2="16.65" y2="16.65" />
+                                                <line x1="8" y1="11" x2="14" y2="11" />
+                                            </svg>
+                                        </div>
+                                        <p style={{ fontSize: 14, fontWeight: 600, color: "#6b7280", margin: 0 }}>
+                                            Tidak ada user ditemukan
+                                        </p>
+                                        <p style={{ fontSize: 12, color: "#9ca3af", margin: 0 }}>
+                                            Coba ubah kata kunci pencarian.
+                                        </p>
+                                    </div>
                                 </td>
                             </tr>
-                        ) : users.map((user) => {
+                        ) : filtered.map((user) => {
                             const currentUser = JSON.parse(localStorage.getItem("user") || "{}")
                             const isSelf = user.id === currentUser.id
                             return (
