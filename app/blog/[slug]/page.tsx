@@ -40,12 +40,12 @@ function getInitials(name: string) {
 
 function sensorContent(text: string) {
     const trimmed = text.trim()
-
     if (trimmed.length <= 3) return "***"
     const visible = trimmed.slice(0, 3)
     const hidden = "*".repeat(trimmed.length - 3)
     return `${visible}${hidden}`
 }
+
 function formatDateShort(iso: string) {
     return new Date(iso).toLocaleDateString("id-ID", {
         day: "numeric", month: "short", year: "numeric"
@@ -60,7 +60,6 @@ export default function BlogDetailPage() {
     const [isLoggedIn, setIsLoggedIn] = useState(false)
     const [scrolled, setScrolled] = useState(false)
     const [copied, setCopied] = useState(false)
-
     const [comments, setComments] = useState<Comment[]>([])
     const [commentText, setCommentText] = useState("")
     const [submitting, setSubmitting] = useState(false)
@@ -74,21 +73,25 @@ export default function BlogDetailPage() {
         if (typeof window !== "undefined") return window.location.href
         return ""
     }
+
     function handleCopyLink() {
         navigator.clipboard.writeText(getShareUrl()).then(() => {
             setCopied(true)
             setTimeout(() => setCopied(false), 2000)
         })
     }
+
     function handleShareWA() {
         const url = encodeURIComponent(getShareUrl())
         const text = encodeURIComponent(`${blog?.title} - `)
         window.open(`https://wa.me/?text=${text}${url}`, "_blank")
     }
+
     function handleShareFB() {
         const url = encodeURIComponent(getShareUrl())
         window.open(`https://www.facebook.com/sharer/sharer.php?u=${url}`, "_blank")
     }
+
     function handleShareTwitter() {
         const url = encodeURIComponent(getShareUrl())
         const text = encodeURIComponent(`${blog?.title}`)
@@ -133,7 +136,7 @@ export default function BlogDetailPage() {
             if (res.ok) {
                 setCommentText("")
                 if (!isLoggedIn) { setGuestName(""); setGuestEmail("") }
-                setSubmitMsg("✓ Komentar terkirim!")
+                setSubmitMsg("Komentar terkirim!")
                 setTimeout(() => setSubmitMsg(null), 3000)
 
                 const cmtRes = await fetch(`${BASE}/blogs/${blog.id}/comments`)
@@ -166,14 +169,11 @@ export default function BlogDetailPage() {
 
         async function fetchBlog() {
             try {
-                const headers: HeadersInit = token
-                    ? { Authorization: `Bearer ${token}` }
-                    : {}
+                const headers: HeadersInit = token ? { Authorization: `Bearer ${token}` } : {}
                 const res = await fetch(`${BASE}/blogs/slug/${params.slug}`, { headers })
                 if (!res.ok) { setNotFound(true); return }
                 const data = await res.json()
                 setBlog(data.data || data)
-
                 const blogId = (data.data || data).id
                 const cmtRes = await fetch(`${BASE}/blogs/${blogId}/comments`)
                 if (cmtRes.ok) {
