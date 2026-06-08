@@ -23,7 +23,7 @@ type Blog = {
 const BASE = process.env.NEXT_PUBLIC_API_URL || "http://localhost:3333"
 
 
-const ITEMS_PER_PAGE = 2  // 2 post per batch
+const ITEMS_PER_PAGE = 2
 
 function getInitials(name: string) {
     return name.split(" ").map(n => n[0]).join("").slice(0, 2).toUpperCase()
@@ -101,7 +101,6 @@ export default function BlogPage() {
             const data = await res.json()
             const fetched: Blog[] = data.data || []
             setAllBlogs(fetched)
-            // Tampilkan hanya ITEMS_PER_PAGE pertama
             setVisibleBlogs(fetched.slice(0, ITEMS_PER_PAGE))
             setNewStartIndex(0)
         } catch {
@@ -178,11 +177,7 @@ export default function BlogPage() {
                     </button>
                 </div>
 
-                <div style={{
-                    display: "flex", alignItems: "center", justifyContent: "space-between",
-                    gap: 12, marginBottom: 24, paddingBottom: 16,
-                    borderBottom: "2px solid #f0f0f0", flexWrap: "wrap",
-                }}>
+                <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 12, marginBottom: 24, paddingBottom: 16, borderBottom: "2px solid #f0f0f0", flexWrap: "wrap", }}>
                     <span className="bp-stats__count">
                         <strong>{allBlogs.length}</strong> artikel
                         {!isAdmin && " ditulis oleh kamu"}
@@ -194,12 +189,7 @@ export default function BlogPage() {
                     </span>
 
                     <div style={{ position: "relative", width: 220 }}>
-                        <svg style={{
-                            position: "absolute", left: 10, top: "50%", transform: "translateY(-50%)",
-                            width: 13, height: 13, stroke: "#bbb", fill: "none",
-                            strokeWidth: 2, strokeLinecap: "round", strokeLinejoin: "round",
-                            pointerEvents: "none",
-                        }} viewBox="0 0 24 24">
+                        <svg style={{ position: "absolute", left: 10, top: "50%", transform: "translateY(-50%)", width: 13, height: 13, stroke: "#bbb", fill: "none", strokeWidth: 2, strokeLinecap: "round", strokeLinejoin: "round", pointerEvents: "none", }} viewBox="0 0 24 24">
                             <circle cx="11" cy="11" r="8" />
                             <line x1="21" y1="21" x2="16.65" y2="16.65" />
                         </svg>
@@ -208,14 +198,7 @@ export default function BlogPage() {
                             placeholder="Cari artikel..."
                             value={search}
                             onChange={e => setSearch(e.target.value)}
-                            style={{
-                                width: "100%", padding: "7px 28px 7px 30px",
-                                border: "1.5px solid #e4e1db", borderRadius: 8,
-                                fontSize: 12.5, fontFamily: "inherit",
-                                background: "#fff", color: "#333", outline: "none",
-                                boxSizing: "border-box" as const,
-                                transition: "border-color 0.15s, box-shadow 0.15s",
-                            }}
+                            style={{ width: "100%", padding: "7px 28px 7px 30px", border: "1.5px solid #e4e1db", borderRadius: 8, fontSize: 12.5, fontFamily: "inherit", background: "#fff", color: "#333", outline: "none", boxSizing: "border-box" as const, transition: "border-color 0.15s, box-shadow 0.15s", }}
                             onFocus={e => {
                                 e.currentTarget.style.borderColor = "#f59e0b"
                                 e.currentTarget.style.boxShadow = "0 0 0 3px rgba(245,158,11,0.1)"
@@ -226,11 +209,7 @@ export default function BlogPage() {
                             }}
                         />
                         {search && (
-                            <button onClick={() => setSearch("")} style={{
-                                position: "absolute", right: 8, top: "50%", transform: "translateY(-50%)",
-                                background: "none", border: "none", cursor: "pointer",
-                                color: "#bbb", display: "flex", alignItems: "center", padding: 0,
-                            }}>
+                            <button onClick={() => setSearch("")} style={{ position: "absolute", right: 8, top: "50%", transform: "translateY(-50%)", background: "none", border: "none", cursor: "pointer", color: "#bbb", display: "flex", alignItems: "center", padding: 0, }}>
                                 <svg width="10" height="10" viewBox="0 0 24 24" fill="none"
                                     stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
                                     <line x1="18" y1="6" x2="6" y2="18" /><line x1="6" y1="6" x2="18" y2="18" />
@@ -256,11 +235,7 @@ export default function BlogPage() {
 
                 ) : filtered.length === 0 ? (
                     <div style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: 10, padding: "60px 20px" }}>
-                        <div style={{
-                            width: 72, height: 72, borderRadius: "50%",
-                            background: "#f2efe9", display: "flex",
-                            alignItems: "center", justifyContent: "center",
-                        }}>
+                        <div style={{ width: 72, height: 72, borderRadius: "50%", background: "#f2efe9", display: "flex", alignItems: "center", justifyContent: "center", }}>
                             <svg width="32" height="32" viewBox="0 0 24 24" fill="none"
                                 stroke="#c5c0b6" strokeWidth="1.2" strokeLinecap="round" strokeLinejoin="round">
                                 <circle cx="11" cy="11" r="8" />
@@ -291,7 +266,15 @@ export default function BlogPage() {
                                     <div className="bp-card__img">
                                         {blog.coverImage
                                             ? <img src={blog.coverImage.startsWith("http") ? blog.coverImage : `${BASE}${blog.coverImage}`} alt={blog.title} />
-                                            : <div className="bp-card__img-empty">✍️</div>
+                                            : <div className="bp-card__img-empty">
+                                                <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="#d1c9b8" strokeWidth="1.2" strokeLinecap="round" strokeLinejoin="round">
+                                                    <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z" />
+                                                    <polyline points="14 2 14 8 20 8" />
+                                                    <line x1="16" y1="13" x2="8" y2="13" />
+                                                    <line x1="16" y1="17" x2="8" y2="17" />
+                                                    <polyline points="10 9 9 9 8 9" />
+                                                </svg>
+                                            </div>
                                         }
                                     </div>
                                     <div className="bp-card__body">
@@ -533,30 +516,15 @@ const pageStyles = `
     margin: 0;
 }
 
-.bp-showmore-loading {
-    display: flex;
-    align-items: center;
-    gap: 8px;
-    font-size: 13px;
-    color: #aaa;
-    margin: 0;
-}
-.bp-dot-pulse {
-    width: 7px; height: 7px;
-    border-radius: 50%;
-    background: #f59e0b;
-    display: inline-block;
-    animation: dot-pulse 1s ease-in-out infinite;
-}
-@keyframes dot-pulse {
+  .bp-showmore-loading { display: flex; align-items: center; gap: 8px; font-size: 13px; color: #aaa; margin: 0; }
+  .bp-dot-pulse { width: 7px; height: 7px; border-radius: 50%; background: #f59e0b; display: inline-block; animation: dot-pulse 1s ease-in-out infinite; }
+  @keyframes dot-pulse {
     0%, 100% { transform: scale(1); opacity: 1; }
     50% { transform: scale(1.6); opacity: 0.5; }
-}
-
-@media (max-width: 768px) {
+  }
+  @media (max-width: 768px) {
     .bp-page { padding: 20px 16px 48px; }
     .bp-header { flex-direction: column; align-items: flex-start; }
     .bp-grid { grid-template-columns: 1fr; }
-    .bp-showmore-btn { max-width: 100%; }
-}
+    .bp-showmore-btn { max-width: 100%; } }
 `

@@ -38,7 +38,7 @@ export default function RegisterPage() {
             localStorage.setItem("token", data.token)
             localStorage.setItem("user", JSON.stringify(data.user))
 
-            showToast("Akun berhasil dibuat! Mengalihkan ke dashboard...", "success", () => router.push("/"))
+            showToast("Akun berhasil dibuat! Mengalihkan ke dashboard...", "success", () => router.push("/dashboard"))
         } catch {
             showToast("Tidak dapat terhubung ke server. Coba lagi.", "danger")
         } finally {

@@ -3,6 +3,181 @@
 import { useEffect, useState } from "react"
 import { useRouter } from "next/navigation"
 
+function ChangePasswordForm({ apiUrl }: { apiUrl: string }) {
+  const [currentPassword, setCurrentPassword] = useState("")
+  const [newPassword, setNewPassword] = useState("")
+  const [confirmPassword, setConfirmPassword] = useState("")
+  const [loading, setLoading] = useState(false)
+  const [msg, setMsg] = useState<{ text: string; ok: boolean } | null>(null)
+  const [showCurrent, setShowCurrent] = useState(false)
+  const [showNew, setShowNew] = useState(false)
+  const [showConfirm, setShowConfirm] = useState(false)
+  const [btnHovered, setBtnHovered] = useState(false)
+  const [btnPressed, setBtnPressed] = useState(false)
+
+  const inputWrapStyle: React.CSSProperties = {
+    position: "relative",
+  }
+
+  const inputStyle: React.CSSProperties = {
+    width: "100%", padding: "9px 36px 9px 12px", borderRadius: 8, fontSize: 13,
+    border: "1.5px solid var(--border)", outline: "none",
+    fontFamily: "inherit", background: "#fff", color: "#1a1a1a",
+    boxSizing: "border-box", transition: "border-color 0.2s",
+  }
+
+  const eyeBtnStyle: React.CSSProperties = {
+    position: "absolute", right: 10, top: "50%", transform: "translateY(-50%)",
+    background: "none", border: "none", cursor: "pointer", padding: 0,
+    display: "flex", alignItems: "center", color: "#a8a29e",
+  }
+
+  const EyeIcon = () => (
+    <svg viewBox="0 0 24 24" style={{ width: 16, height: 16, stroke: "currentColor", fill: "none", strokeWidth: 2, strokeLinecap: "round", strokeLinejoin: "round" }}>
+      <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z" />
+      <circle cx="12" cy="12" r="3" />
+    </svg>
+  )
+
+  const EyeOffIcon = () => (
+    <svg viewBox="0 0 24 24" style={{ width: 16, height: 16, stroke: "currentColor", fill: "none", strokeWidth: 2, strokeLinecap: "round", strokeLinejoin: "round" }}>
+      <path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19m-6.72-1.07a3 3 0 1 1-4.24-4.24" />
+      <line x1="1" y1="1" x2="23" y2="23" />
+    </svg>
+  )
+
+  async function handleSubmit() {
+    setMsg(null)
+    if (!currentPassword || !newPassword || !confirmPassword) {
+      setMsg({ text: "Semua field wajib diisi.", ok: false }); return
+    }
+    if (newPassword.length < 6) {
+      setMsg({ text: "Password baru minimal 6 karakter.", ok: false }); return
+    }
+    if (newPassword !== confirmPassword) {
+      setMsg({ text: "Konfirmasi password tidak cocok.", ok: false }); return
+    }
+    const token = localStorage.getItem("token") || ""
+    setLoading(true)
+    try {
+      const res = await fetch(`${apiUrl}/me/change-password`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
+        body: JSON.stringify({ currentPassword, newPassword }),
+      })
+      if (res.ok) {
+        setMsg({ text: "✓ Password berhasil diubah. Anda akan logout dalam 3 detik...", ok: true })
+        setCurrentPassword(""); setNewPassword(""); setConfirmPassword("")
+        setTimeout(() => {
+          localStorage.removeItem("token")
+          localStorage.removeItem("user")
+          window.location.href = "/"
+        }, 3000)
+      } else {
+        const err = await res.json()
+        setMsg({ text: err.message ?? "Gagal mengubah password.", ok: false })
+      }
+    } catch {
+      setMsg({ text: "Gagal terhubung ke server.", ok: false })
+    } finally {
+      setLoading(false)
+    }
+  }
+
+  const labelStyle: React.CSSProperties = {
+    fontSize: 12, color: "var(--text-secondary)", display: "block", marginBottom: 5
+  }
+
+  return (
+    <div style={{ display: "flex", flexDirection: "column", gap: 12, maxWidth: 400 }}>
+
+      <div>
+        <label style={labelStyle}>Password Saat Ini</label>
+        <div style={inputWrapStyle}>
+          <input
+            type={showCurrent ? "text" : "password"}
+            style={inputStyle} value={currentPassword}
+            onChange={e => setCurrentPassword(e.target.value)}
+            placeholder="Masukkan password lama"
+            onFocus={e => e.target.style.borderColor = "var(--primary-dark)"}
+            onBlur={e => e.target.style.borderColor = "var(--border)"}
+          />
+          <button style={eyeBtnStyle} onClick={() => setShowCurrent(v => !v)} type="button">
+            {showCurrent ? <EyeOffIcon /> : <EyeIcon />}
+          </button>
+        </div>
+      </div>
+
+      <div>
+        <label style={labelStyle}>Password Baru</label>
+        <div style={inputWrapStyle}>
+          <input
+            type={showNew ? "text" : "password"}
+            style={inputStyle} value={newPassword}
+            onChange={e => setNewPassword(e.target.value)}
+            placeholder="Minimal 6 karakter"
+            onFocus={e => e.target.style.borderColor = "var(--primary-dark)"}
+            onBlur={e => e.target.style.borderColor = "var(--border)"}
+          />
+          <button style={eyeBtnStyle} onClick={() => setShowNew(v => !v)} type="button">
+            {showNew ? <EyeOffIcon /> : <EyeIcon />}
+          </button>
+        </div>
+      </div>
+
+      <div>
+        <label style={labelStyle}>Konfirmasi Password Baru</label>
+        <div style={inputWrapStyle}>
+          <input
+            type={showConfirm ? "text" : "password"}
+            style={inputStyle} value={confirmPassword}
+            onChange={e => setConfirmPassword(e.target.value)}
+            placeholder="Ulangi password baru"
+            onFocus={e => e.target.style.borderColor = "var(--primary-dark)"}
+            onBlur={e => e.target.style.borderColor = "var(--border)"}
+          />
+          <button style={eyeBtnStyle} onClick={() => setShowConfirm(v => !v)} type="button">
+            {showConfirm ? <EyeOffIcon /> : <EyeIcon />}
+          </button>
+        </div>
+      </div>
+
+      {msg && (
+        <p style={{
+          fontSize: 13, fontWeight: 600, padding: "8px 12px", borderRadius: 8, margin: 0,
+          background: msg.ok ? "#f0fdf4" : "#fff5f5",
+          color: msg.ok ? "#166534" : "#e53e3e",
+          border: `1px solid ${msg.ok ? "#bbf7d0" : "#f5c6c6"}`,
+        }}>
+          {msg.text}
+        </p>
+      )}
+
+      <button
+        onClick={handleSubmit}
+        disabled={loading}
+        onMouseEnter={() => setBtnHovered(true)}
+        onMouseLeave={() => { setBtnHovered(false); setBtnPressed(false) }}
+        onMouseDown={() => setBtnPressed(true)}
+        onMouseUp={() => setBtnPressed(false)}
+        style={{
+          padding: "9px 22px", borderRadius: 999, border: "none",
+          background: loading ? "#555" : btnPressed ? "#f2d04e" : btnHovered ? "#3a3729" : "var(--primary-dark, #24221b)",
+          color: btnPressed ? "#24221b" : "#f2d04e",
+          fontSize: 13, fontWeight: 700, cursor: loading ? "not-allowed" : "pointer",
+          fontFamily: "inherit",
+          transform: btnPressed ? "scale(0.97)" : btnHovered ? "translateY(-1px)" : "none",
+          boxShadow: btnHovered && !btnPressed ? "0 4px 12px rgba(0,0,0,0.2)" : "none",
+          transition: "background 0.18s, transform 0.12s, box-shadow 0.18s, color 0.18s",
+          alignSelf: "flex-start",
+        }}
+      >
+        {loading ? "Menyimpan..." : "Simpan Password"}
+      </button>
+    </div>
+  )
+}
+
 type Employee = {
   id: number
   name: string
@@ -162,6 +337,11 @@ export default function Home() {
         ) : (
           <p style={{ color: "var(--text-secondary)", fontSize: 14 }}>Gagal memuat data akun.</p>
         )}
+      </div>
+
+      <div className="container" style={{ marginTop: 16 }}>
+        <h2 style={{ fontSize: 17, marginBottom: 16 }}>Ganti Password</h2>
+        <ChangePasswordForm apiUrl={API} />
       </div>
     </div>
   )

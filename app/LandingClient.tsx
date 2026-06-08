@@ -880,10 +880,11 @@ export default function LandingClient() {
 
                 <section className="lp-section lp-section--contact" id="contact">
                     <div className="lp-section__header">
-                        <p className="lp-section__eyebrow lp-section__eyebrow--light">Contact</p>
+                        <p className="lp-section__eyebrow lp-section__eyebrow--light">Social</p>
                         <h2 className="lp-section__title lp-section__title--light">How To Reach Me</h2>
-                        <p className="lp-section__sub lp-section__sub--light">
-                            Reach out through any of the channels below — I&apos;ll get back to you promptly.
+                        <p className="lp-contact-sub">
+                            Reach out through any of the channels below —
+                            I&apos;ll get back to you promptly.
                         </p>
                         <div className="lp-section__divider lp-section__divider--earth" />
                     </div>
@@ -893,19 +894,18 @@ export default function LandingClient() {
                                 Belum ada kontak.
                             </p>
                         ) : contacts.map((contact) => (
-                            <a
-                                key={contact.id}
-                                href={contact.url}
+                            <a key={contact.id} href={contact.url}
                                 target={contact.iconKey !== "email" ? "_blank" : undefined}
                                 rel="noopener noreferrer"
                                 className="lp-contact-item"
                             >
-                                <span className="lp-contact-item__icon">
-                                    {iconMap[contact.iconKey] ?? <IconMail />}
-                                </span>
-                                <span className="lp-contact-item__label">{contact.label}</span>
+                                <div className="lp-contact-item__top">
+                                    <span className="lp-contact-item__icon">
+                                        {iconMap[contact.iconKey] ?? <IconMail />}
+                                    </span>
+                                    <span className="lp-contact-item__label">{contact.label}</span>
+                                </div>
                                 <span className="lp-contact-item__text">{contact.displayText}</span>
-                                <span className="lp-contact-item__arrow">→</span>
                             </a>
                         ))}
                     </div>
@@ -1067,13 +1067,79 @@ const landingStyles = `
   .lp-hire-card__icon--filled { background: var(--earth); border-color: var(--earth); color: var(--navy); }
   .lp-hire-card__platform { font-size: 17px; font-weight: 700; color: var(--navy); letter-spacing: -0.03em; font-family: "DM Serif Display", serif; }
   .lp-hire-card__desc { font-size: 13px; color: var(--text-muted); line-height: 1.6; }
-  .lp-contact-list { max-width: 560px; margin: 0 auto; display: flex; flex-direction: column; gap: 10px; }
-  .lp-contact-item { display: flex; align-items: center; gap: 14px; background: rgba(255,255,255,0.07); border: 1px solid rgba(255,255,255,0.1); border-radius: 14px; padding: 14px 18px; text-decoration: none; color: rgba(255,255,255,0.65); font-size: 14px; font-weight: 500; transition: all var(--transition); }
-  .lp-contact-item:hover { background: rgba(255,255,255,0.12); color: var(--white); transform: translateX(4px); border-color: rgba(227,167,80,0.35); }
-  .lp-contact-item__icon { width: 38px; height: 38px; border-radius: 10px; flex-shrink: 0; background: rgba(227,167,80,0.15); border: 1px solid rgba(227,167,80,0.25); display: flex; align-items: center; justify-content: center; color: var(--earth); }
-  .lp-contact-item__label { font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.08em; color: rgba(188,212,204,0.55); min-width: 70px; }
-  .lp-contact-item__text { flex: 1; }
-  .lp-contact-item__arrow { color: rgba(227,167,80,0.4); font-size: 16px; }
+
+  .lp-contact-list {
+  max-width: 780px;
+  margin: 0 auto;
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 8px;
+}
+.lp-contact-item {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 6px;
+  padding: 14px 16px;
+  min-width: 120px;
+  flex: 1;
+  background: rgba(255,255,255,0.04);
+  border: 1px solid rgba(255,255,255,0.07);
+  border-radius: 12px;
+  text-decoration: none;
+  color: inherit;
+  transition: background 0.2s ease, border-color 0.2s ease, transform 0.2s ease;
+}
+.lp-contact-item:hover {
+  background: rgba(255,255,255,0.07);
+  border-color: rgba(242,208,78,0.18);
+  transform: translateY(-2px);
+}
+.lp-contact-item__top {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+}
+.lp-contact-item__icon {
+  width: 26px; height: 26px;
+  border-radius: 7px;
+  background: rgba(242,208,78,0.08);
+  border: 1px solid rgba(242,208,78,0.12);
+  color: var(--earth);
+  display: flex; align-items: center; justify-content: center;
+  flex-shrink: 0;
+}
+.lp-contact-item__icon svg { width: 14px; height: 14px; }
+.lp-contact-item__label {
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: rgba(255,255,255,0.55);
+}
+.lp-contact-item__text {
+  font-size: 10.5px;
+  font-weight: 400;
+  color: rgba(255,255,255,0.28);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  max-width: 100%;
+  text-align: center;
+}
+.lp-contact-item__arrow { display: none; }
+
+
+.lp-contact-sub {
+  max-width: 420px;
+  margin: 0 auto;
+
+  font-size: 14px;
+  line-height: 1.8;
+
+  color: rgba(188,212,204,0.65);
+}
   .lp-footer { background: var(--navy); border-top: 1px solid rgba(255,255,255,0.06); padding: 24px 40px; }
   .lp-footer__inner { max-width: 1200px; margin: 0 auto; display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 16px; }
   .lp-footer__brand { font-size: 18px; font-weight: 700; letter-spacing: -0.04em; color: var(--white); font-family: "DM Serif Display", serif; }

@@ -72,9 +72,10 @@ export default function AdminCommentsPage() {
     const router = useRouter()
     const [comments, setComments] = useState<Comment[]>([])
     const [loading, setLoading] = useState(true)
-    const [filter, setFilter] = useState<'all' | 'approved' | 'hidden'>('all')
+    const [filter, setFilter] = useState<'new' | 'all' | 'approved' | 'hidden'>('new')
     const [actionLoading, setActionLoading] = useState<number | null>(null)
     const [deleteTarget, setDeleteTarget] = useState<number | null>(null)
+    const [seenIds, setSeenIds] = useState<Set<number>>(new Set())
 
     const [toast, setToast] = useState("")
     const showToast = (msg: string) => {
@@ -88,6 +89,10 @@ export default function AdminCommentsPage() {
         if (!token || !user) { router.push("/"); return }
         const parsed = JSON.parse(user)
         if (parsed.role !== "admin") { router.push("/dashboard"); return }
+
+        const stored = localStorage.getItem("nexora_seen_comment_ids")
+        if (stored) setSeenIds(new Set(JSON.parse(stored)))
+
         fetchComments(token)
     }, [])
 
@@ -150,13 +155,25 @@ export default function AdminCommentsPage() {
         }
     }
 
-    const filtered = filter === 'all'
-        ? comments
-        : comments.filter(c => c.status === filter)
+    function markAllAsSeen() {
+        const allIds = comments.map(c => c.id)
+        const updated = new Set([...seenIds, ...allIds])
+        setSeenIds(updated)
+        localStorage.setItem("nexora_seen_comment_ids", JSON.stringify([...updated]))
+        setFilter('all')
+        showToast("Semua komentar sudah ditandai dilihat")
+    }
 
+    const countNew = comments.filter(c => !seenIds.has(c.id)).length
     const countAll = comments.length
     const countApproved = comments.filter(c => c.status === 'approved').length
     const countHidden = comments.filter(c => c.status === 'hidden').length
+
+    const filtered = filter === 'new'
+        ? comments.filter(c => !seenIds.has(c.id))
+        : filter === 'all'
+            ? comments
+            : comments.filter(c => c.status === filter)
 
     return (
         <div>
@@ -179,8 +196,9 @@ export default function AdminCommentsPage() {
                 </div>
             </div>
 
-            <div style={{ display: "flex", gap: 12, marginBottom: 24, flexWrap: "wrap" }}>
+            <div style={{ display: "flex", gap: 12, marginBottom: 24, flexWrap: "wrap", alignItems: "center" }}>
                 {[
+                    { label: "Baru", value: countNew, key: "new", color: "#e0e7ff", text: "#3730a3" },
                     { label: "Semua", value: countAll, key: "all", color: "#f2d04e", text: "#24221b" },
                     { label: "Tampil", value: countApproved, key: "approved", color: "#d1fae5", text: "#065f46" },
                     { label: "Tersensor", value: countHidden, key: "hidden", color: "#fee2e2", text: "#991b1b" },
@@ -198,9 +216,17 @@ export default function AdminCommentsPage() {
                             fontFamily: "inherit",
                             boxShadow: filter === s.key ? `0 2px 12px ${s.color}88` : "none",
                             transition: "all 0.18s",
+                            position: "relative",
                         }}
                     >
                         {s.label}
+                        {s.key === "new" && countNew > 0 && (
+                            <span style={{
+                                position: "absolute", top: 6, right: 6,
+                                width: 7, height: 7, borderRadius: "50%",
+                                background: "#ef4444",
+                            }} />
+                        )}
                         <span style={{
                             background: filter === s.key ? "rgba(0,0,0,0.12)" : "var(--border, #eee)",
                             padding: "1px 8px", borderRadius: 999, fontSize: 12,
@@ -209,6 +235,22 @@ export default function AdminCommentsPage() {
                         </span>
                     </button>
                 ))}
+
+                {filter === 'new' && countNew > 0 && (
+                    <button
+                        onClick={markAllAsSeen}
+                        style={{
+                            marginLeft: "auto",
+                            padding: "10px 16px", borderRadius: 12,
+                            border: "1.5px solid #c7d2fe",
+                            background: "#f5f3ff", color: "#4338ca",
+                            fontWeight: 600, fontSize: 12, cursor: "pointer",
+                            fontFamily: "inherit", transition: "all 0.18s",
+                        }}
+                    >
+                        Tandai Sudah Dilihat
+                    </button>
+                )}
             </div>
 
             <div className="container">
@@ -231,13 +273,22 @@ export default function AdminCommentsPage() {
                                 padding: "14px 16px",
                                 display: "flex", gap: 12, alignItems: "center",
                             }}>
-                                <div style={{
-                                    width: 36, height: 36, borderRadius: "50%", flexShrink: 0,
-                                    background: "#f2d04e", color: "#24221b",
-                                    display: "flex", alignItems: "center", justifyContent: "center",
-                                    fontSize: 11, fontWeight: 700,
-                                }}>
-                                    {c.userName.split(" ").map(n => n[0]).slice(0, 2).join("").toUpperCase()}
+                                <div style={{ position: "relative" }}>
+                                    <div style={{
+                                        width: 36, height: 36, borderRadius: "50%", flexShrink: 0,
+                                        background: "#f2d04e", color: "#24221b",
+                                        display: "flex", alignItems: "center", justifyContent: "center",
+                                        fontSize: 11, fontWeight: 700,
+                                    }}>
+                                        {c.userName.split(" ").map(n => n[0]).slice(0, 2).join("").toUpperCase()}
+                                    </div>
+                                    {!seenIds.has(c.id) && (
+                                        <span style={{
+                                            position: "absolute", top: 0, right: 0,
+                                            width: 10, height: 10, borderRadius: "50%",
+                                            background: "#3b82f6", border: "2px solid white",
+                                        }} />
+                                    )}
                                 </div>
 
                                 <div style={{ flex: 1, minWidth: 0 }}>
